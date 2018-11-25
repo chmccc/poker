@@ -1,5 +1,12 @@
 const cardNames = ['', 'Ace', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Jack', 'Queen', 'King', 'Ace'];
 
+const suitEmojis = {
+  'Clubs': '♣️',
+  'Hearts': '♥️',
+  'Diamonds': '♦️',
+  'Spades': '♠️',
+}
+
 let baseDeck = [
   {value: 2, suits: ['Hearts', 'Clubs', 'Diamonds', 'Spades']},
   {value: 3, suits: ['Hearts', 'Clubs', 'Diamonds', 'Spades']},
@@ -30,6 +37,7 @@ class Card {
   constructor(val, suit) {
     this.value = val === 1 ? 14 : val;
     this.suit = suit;
+    this.suitEmoji = suitEmojis[suit];
     this.color = (suit === 'Hearts' || suit === 'Diamonds') ? 'red' : 'black';
     this.isAce = val === 14;
     this.displayName = `${cardNames[val]} of ${suit}`;
