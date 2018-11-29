@@ -7,7 +7,7 @@ import Card from '../components/Card';
 
 Enzyme.configure({ adapter: new Adapter() });
 
-describe('Table component render tests', () => {
+describe('PlayerHand component render tests', () => {
   test('it renders', () => {
     const wrapper = shallow(<PlayerHand cards={[]} />);
     expect(wrapper.exists()).toBe(true);

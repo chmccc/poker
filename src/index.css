@@ -61,3 +61,13 @@ body {
   display: flex;
   justify-content: center;
 }
+
+.ai-top {
+  display: flex;
+}
+
+.ai-card-container {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+}
