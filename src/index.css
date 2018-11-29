@@ -27,3 +27,31 @@ code {
     "ai1 table ai3"
     "player player player";
 }
+
+.Card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  box-shadow: 3px 4px rgba(0, 0, 0, .5);
+  border-radius: 3px;
+  margin: 5px;
+  background-color: white;
+}
+
+.card-suit {
+  display: flex;
+  justify-content: center;
+}
+
+.card-title {
+  align-self: 'flex-start';
+}
+
+.Table {
+  display: flex;
+  margin-left: 10px;
+  justify-content: flex-start;
+  align-items: center;
+  grid-area: table;
+}
