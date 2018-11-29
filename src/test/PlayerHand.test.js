@@ -2,19 +2,19 @@ import React from 'react';
 import Enzyme, {shallow, mount} from 'enzyme';
 import Adapter from 'enzyme-adapter-react-16';
 import * as deck from '../util/deck';
-import Table from '../components/Table';
+import PlayerHand from '../components/PlayerHand';
 import Card from '../components/Card';
 
 Enzyme.configure({ adapter: new Adapter() });
 
 describe('Table component render tests', () => {
   test('it renders', () => {
-    const wrapper = shallow(<Table cards={[]} />);
+    const wrapper = shallow(<PlayerHand cards={[]} />);
     expect(wrapper.exists()).toBe(true);
   });
 
-  test('it contains 3 Card components when given 3 card object', () => {
-    const wrapper = shallow(<Table cards={[new deck.Card(14, 'Hearts'), new deck.Card(13, 'Hearts'), new deck.Card(12, 'Hearts')]} />);
-    expect(wrapper.find(Card)).toHaveLength(3);
+  test('it contains 2 Card components when given 2 card objects', () => {
+    const wrapper = shallow(<PlayerHand cards={[new deck.Card(14, 'Hearts'), new deck.Card(13, 'Hearts')]} />);
+    expect(wrapper.find(Card)).toHaveLength(2);
   });
 })
