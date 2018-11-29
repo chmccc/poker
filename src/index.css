@@ -10,13 +10,7 @@ body {
   background-color: darkgreen;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
-    monospace;
-}
-
 .App {
-  /* text-align: center; */
   color: white;
   display: grid;
   grid-template-columns: 20vw 60vw 20vw;
@@ -54,4 +48,16 @@ code {
   justify-content: flex-start;
   align-items: center;
   grid-area: table;
+}
+
+.PlayerDashboard {
+  grid-area: player;
+  display: grid;
+  grid-template-columns: 20% 55% 25%;
+  grid-template-areas: "playerName playerCards playerOptions";
+}
+
+.PlayerHand {
+  display: flex;
+  justify-content: center;
 }

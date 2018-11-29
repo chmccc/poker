@@ -1,5 +1,9 @@
 ## Functionality
 
+### Dealing
+
+- set proper card distribution at each game stage
+
 ### Score checking
 
 - test & build score object creator for 5-card hands
