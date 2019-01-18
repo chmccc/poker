@@ -18,7 +18,6 @@ class ScoreCache {
       this.hits++;
       return [this.cache[string], string];
     }
-    // console.log('cache hits: ', this.hits);
     return [null, string];
   }
 
@@ -157,22 +156,8 @@ const getScore = (holeCards, tableCards, owner) => {
 }
 
 const getWinner = (playerData, tableCards) => {
-  /* sample playerData
-    player: { id: 'player', active: true, hand: [] },
-    ai1: { id: 'ai1', active: true, hand: [] },
-    ai2: { id: 'ai2', active: true, hand: [] },
-    ai3: { id: 'ai3', active: true, hand: [] },
-  }*/
 
-  /* sample scoreObject from getScore:
-    type: expect.any(String),
-    score: expect.any(Number),
-    cardsUsed: expect.any(Array),
-    highHandCards: expect.any(Array),
-    owner: expect.any(String)
-  */
-
-  // create an array of all active player's hands (hole cards)
+  // create an array of all active player's hole cards
   const playerHandsArray = Object.values(playerData).reduce((arr, data) => {
     if (data.active) arr.push(data);
     return arr;
@@ -182,23 +167,19 @@ const getWinner = (playerData, tableCards) => {
     throw new Error('getWinner: Unable to compute winner. Ensure at least one player is marked "active"');
   }
 
-  // for each active player, compare against the next player in the array, carrying the best one for next comparison
+  // for each active player, compare against the next player in the array, carrying the best one for next comparison, then return the best score object
   return playerHandsArray.reduce((best, currPlayerData) => {
 
     const curr = getScore(currPlayerData.hand, tableCards, currPlayerData.id);
     if (!best) best = curr;
     else {
       if (curr.score === best.score) {
-        // same type of hand, is there winner between the high *hand* cards?
-        // console.log(`highHandCards comparison... ${best.owner}:\n`, best.highHandCards.map(e => e.value), `\n${curr.owner}:\n`, curr.highHandCards.map(e => e.value));
+        // same type of hand, is there a winner between the high *hand* cards?
         const { bestScoreObject: tieBreaker, draw: handCardTie } = compareByHighHandCards(best, curr);
         if (handCardTie) {
           // TODO: implement kicker cards
           throw new Error("getWinner: We're not equipped to deal with kicker cards yet. Please reload and try again.");
-        } else {
-          // console.log('Tie broken by high hand card');
-          best = tieBreaker;
-        }
+        } else best = tieBreaker;
       }
       else if (curr.score > best.score) best = curr;
     }
@@ -206,8 +187,6 @@ const getWinner = (playerData, tableCards) => {
     return best;
 
   }, null);
-
-  // return the best one
 
 };
 
