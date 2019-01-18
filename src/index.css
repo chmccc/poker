@@ -15,12 +15,25 @@ body {
   display: grid;
   width: 100vw;
   grid-template-columns: 20% 60% 20%;
-  grid-template-rows: 50px 150px 300px 300px;
+  grid-template-rows: 100px 150px 300px 300px;
   grid-template-areas: 
     "infopanel infopanel infopanel"
     ". ai2 ."
     "ai1 table ai3"
     "player player player";
+}
+
+#infopanel {
+  width: 100%;
+  grid-area: infopanel;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow: scroll;
+}
+
+.info-message {
+  margin: 1px 20px;
 }
 
 .Card {

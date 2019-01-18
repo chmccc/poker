@@ -1,3 +1,10 @@
+/**
+ * @module engine
+ * @description Contains functions related to deck management
+ */
+
+// TODO: add JSDoc annotations
+
 // caches all hands passed in regardless of size -- should improve performance in any function that looks for a best score from given cards
 class ScoreCache {
   constructor() {
