@@ -90,7 +90,7 @@ const getScoreObject = (hand) => {
       }
       if (cardSet.length === 2) { // check for pair/full house
         if (threeOfAKind) {
-          scoreObject = { score: 6, type: 'a full house', cardsUsed: hand, highHandCards: [threeOfAKind[0]]};
+          scoreObject = { score: 6, type: 'a full house', cardsUsed: hand, highHandCards: [threeOfAKind[0], cardSet[0]]};
           break;
         }
         else if (firstPair) {
@@ -115,9 +115,6 @@ const getScoreObject = (hand) => {
 };
 
 const compareByHighHandCards = (oldScoreObject, newScoreObject) => {
-  // console.log('both had type ' + oldScoreObject.type + ', must compare by hand cards');
-  // console.log('old best object: ', JSON.stringify(oldScoreObject.highHandCards.map(e => e.displayName)));
-  // console.log('new object: ', JSON.stringify(newScoreObject.highHandCards.map(e => e.displayName)));
   for (let i = 0; i < newScoreObject.highHandCards.length; i++) {
     if (newScoreObject.highHandCards[i].value > oldScoreObject.highHandCards[i].value) {
       return { draw: false, bestScoreObject: newScoreObject };
@@ -127,13 +124,6 @@ const compareByHighHandCards = (oldScoreObject, newScoreObject) => {
     }
   }
   return { draw: true, bestScoreObject: oldScoreObject };
-}
-
-const scoreHoleCards = (hand) => {
-  if (hand.length !== 2) throw new Error(`scoreHoleCards requires array of length 2 and got length ${hand.length}`);
-  if (hand[0].value === hand[1].value) return { score: hand[0].value / 100, cards: hand }
-  const cards = hand.sort((a, b) => b.value - a.value);
-  return { score: cards[0].value / 1000, cards }
 }
 
 const getScoreRecursively = (hand) => {
@@ -163,10 +153,6 @@ const getScoreRecursively = (hand) => {
 const getScore = (holeCards, tableCards, owner) => {
   const fullHand = [...holeCards, ...tableCards].sort((a, b) => a.value - b.value);
   const bestScoreObject = getScoreRecursively(fullHand);
-  if (owner) bestScoreObject.owner = owner;
-  const { score, cards } = scoreHoleCards(holeCards);
-  bestScoreObject.holeCardsScore = score;
-  bestScoreObject.highHoleCards = cards;
   bestScoreObject.owner = owner;
   return bestScoreObject;
 }
@@ -182,9 +168,7 @@ const getWinner = (playerData, tableCards) => {
   /* sample scoreObject from getScore:
     type: expect.any(String),
     score: expect.any(Number),
-    holeCardsScore: expect.any(Number),
     cardsUsed: expect.any(Array),
-    highHoleCards: expect.any(Array),
     highHandCards: expect.any(Array),
     owner: expect.any(String)
   */
@@ -207,13 +191,13 @@ const getWinner = (playerData, tableCards) => {
     else {
       if (curr.score === best.score) {
         // same type of hand, is there winner between the high *hand* cards?
-        console.log(`highHandCards comparison... ${best.owner}:\n`, best.highHandCards.map(e => e.value), `\n${curr.owner}:\n`, curr.highHandCards.map(e => e.value));
+        // console.log(`highHandCards comparison... ${best.owner}:\n`, best.highHandCards.map(e => e.value), `\n${curr.owner}:\n`, curr.highHandCards.map(e => e.value));
         const { bestScoreObject: tieBreaker, draw: handCardTie } = compareByHighHandCards(best, curr);
         if (handCardTie) {
           // TODO: implement kicker cards
           throw new Error("getWinner: We're not equipped to deal with kicker cards yet");
         } else {
-          console.log('Tie broken by high hand card');
+          // console.log('Tie broken by high hand card');
           best = tieBreaker;
         }
       }
@@ -228,4 +212,4 @@ const getWinner = (playerData, tableCards) => {
 
 };
 
-export { getScore, getScoreObject, scoreHoleCards, ScoreCache, getWinner };
+export { getScore, getScoreObject, ScoreCache, getWinner };

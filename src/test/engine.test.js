@@ -1,5 +1,7 @@
 import { Card, Deck } from '../util/deck';
-import { getScore, getScoreObject, scoreHoleCards, getWinner } from '../util/engine.js';
+import { getScore, getScoreObject, getWinner } from '../util/engine.js';
+
+const stressMultiplier = 500; // determines loop size for stress tests
 
 // helper function to build card arrays with shorthand input
 const createHand = (vals, suits) => {
@@ -69,7 +71,7 @@ describe('getScoreObject tests', () => {
     let fullTestScoreObj = getScoreObject(createHand([12,13,12,13,12], ['s','c','d','h','s']));
     expect(fullTestScoreObj.score).toEqual(6);
     expect(fullTestScoreObj.highHandCards[0].value).toEqual(12);
-    expect(fullTestScoreObj.highHandCards).toHaveLength(1);
+    expect(fullTestScoreObj.highHandCards).toHaveLength(2);
     expect(fullTestScoreObj.type).toEqual('a full house');
     expect(fullTestScoreObj.cardsUsed).toHaveLength(5);
     fullTestScoreObj = getScoreObject(createHand([3,3,3,2,2], ['s','c','d','h','s']));
@@ -150,42 +152,13 @@ describe('getScoreObject tests', () => {
 
 });
 
-describe('scoreHoleCards tests: ', () => {
-  let testScoreObj = scoreHoleCards([new Card(2, 'Spades'), new Card (2, 'Diamonds')]);
-  
-  test('should throw error if not provided an array of correct size', () => {
-    expect(() => scoreHoleCards([new Card(14, 'Spades')])).toThrow();
-  }) 
-  
-  test('should return a score object from a valid hole hand', () => {
-    expect(testScoreObj).toMatchObject({
-      score: expect.any(Number),
-      cards: expect.any(Array)
-    });
-  });
-
-  test('should detect a pair', () => {
-    expect(testScoreObj.cards).toHaveLength(2);
-    expect(testScoreObj.cards[0].value).toEqual(2);
-    expect(testScoreObj.cards[1].value).toEqual(2);
-    expect(testScoreObj.score).toEqual(.02);
-  });
-
-  test('should return a sorted array of cards with proper fractional score based on high hole card', () => {
-    testScoreObj = scoreHoleCards([new Card(4, 'Spades'), new Card (13, 'Diamonds')]);
-    expect(testScoreObj.cards[0].value).toEqual(13);
-    expect(testScoreObj.score).toEqual(0.013);
-  });
-
-});
-
 const deck = new Deck();
 
 describe('getScore basic tests: ', () => {
   let testScoreObj = getScore(createHand([11,2], ['h','d']), createHand([3,4,5,6,9], ['d','d','s','c','d']), 'test');
 
-  test('should return a score object with correct keys and value types (100x stress test)', () => {
-    for (let i = 0; i < 100; i++) {
+  test(`should return a score object with correct keys and value types (${stressMultiplier}x stress test)`, () => {
+    for (let i = 0; i < 500; i++) {
       deck.reset();
       const holeCards = [deck.dealCard(), deck.dealCard()];
       const tableCards = new Array(5).fill(null).map(e => deck.dealCard());
@@ -193,13 +166,10 @@ describe('getScore basic tests: ', () => {
       expect(stressScoreObject).toMatchObject({
         type: expect.any(String),
         score: expect.any(Number),
-        holeCardsScore: expect.any(Number),
         cardsUsed: expect.any(Array),
-        highHoleCards: expect.any(Array),
         highHandCards: expect.any(Array),
         owner: expect.any(String),
       });
-      expect(stressScoreObject.holeCardsScore).toBeLessThan(1);   
     }
   })
   
@@ -209,21 +179,12 @@ describe('getScore basic tests: ', () => {
     expect(testScoreObj.cardsUsed).toEqual(expect.arrayContaining([new Card(6, 'Clubs'), new Card(5, 'Spades'), new Card(4, 'Diamonds'), new Card(3, 'Diamonds'), new Card(2, 'Diamonds')]));
   });
   
-  test('should correctly identify the high hole card(s)', () => {
-    testScoreObj = getScore(createHand([1,3], ['s','d']), createHand([3,3,1,14,9], ['d','d','s','c','d']), 'test'); // full house, 3s over aces, ace high in hole
-    expect(testScoreObj.score).toEqual(6);
-    expect(testScoreObj.holeCardsScore).toEqual(0.014);
-    testScoreObj = getScore(createHand([7,7], ['s','c']), createHand([8,9,10,11,13], ['d','c','d','s','d']), 'test'); // straight, 7 - jack, pair of 7s in hole
-    expect(testScoreObj.score).toEqual(5);
-    expect(testScoreObj.holeCardsScore).toEqual(.07);
-  });
   
 });
 
 describe('getScore kicker tests', () => {
   let testScoreObj;
 
-  test
 });
 
 describe('comprehensive scoring tests for getScore:', () => {
@@ -239,7 +200,6 @@ describe('comprehensive scoring tests for getScore:', () => {
     expect(testScoreObj.highHandCards).toHaveLength(2);
     expect(testScoreObj.highHandCards[0].value).toEqual(12);
     expect(testScoreObj.highHandCards[1].value).toEqual(7);
-    expect(testScoreObj.highHoleCards[0].value).toEqual(12);
   });
 
   test('should choose the highest straight', () => {
@@ -247,7 +207,6 @@ describe('comprehensive scoring tests for getScore:', () => {
     expect(testScoreObj.score).toEqual(5);
     expect(testScoreObj.highHandCards).toHaveLength(1);
     expect(testScoreObj.highHandCards[0].value).toEqual(8);
-    expect(testScoreObj.highHoleCards[0].value).toEqual(3);
 
   });
 
@@ -256,7 +215,6 @@ describe('comprehensive scoring tests for getScore:', () => {
     expect(testScoreObj.score).toEqual(5);
     expect(testScoreObj.highHandCards).toHaveLength(1);
     expect(testScoreObj.highHandCards[0].value).toEqual(7);
-    expect(testScoreObj.highHoleCards[0].value).toEqual(14);
   });
 
   test('should choose a flush over 3 of a kind', () => {
@@ -264,7 +222,6 @@ describe('comprehensive scoring tests for getScore:', () => {
     expect(testScoreObj.score).toEqual(4);
     expect(testScoreObj.highHandCards).toHaveLength(5);
     expect(testScoreObj.highHandCards[0].value).toEqual(12);
-    expect(testScoreObj.highHoleCards[0].value).toEqual(11);
   });
   
   test('should choose a straight flush over a higher-number straight', () => {
@@ -272,116 +229,133 @@ describe('comprehensive scoring tests for getScore:', () => {
     expect(testScoreObj.score).toEqual(8);
     expect(testScoreObj.highHandCards).toHaveLength(1);
     expect(testScoreObj.highHandCards[0].value).toEqual(12);
-    expect(testScoreObj.highHoleCards[0].value).toEqual(13);
   });
 
-  let playerData, tableCards;
+});
 
-  describe('getWinner tests', () => {
+let playerData, tableCards;
 
-    beforeEach(() => {
+describe('getWinner tests', () => {
+
+  beforeEach(() => {
+    deck.reset();
+    playerData = {
+      player: { id: 'player', active: true, hand: [] },
+      ai1: { id: 'ai1', active: true, hand: [] },
+      ai2: { id: 'ai2', active: true, hand: [] },
+      ai3: { id: 'ai3', active: true, hand: [] },
+    };
+    tableCards = [];
+  })
+
+  test("should return active player's score object when only one player is active (not folded)", () => {
+    playerData.ai1.active = playerData.ai2.active = playerData.ai3.active = false;
+    playerData.player.hand = createHand([2, 2], ['h', 's']);
+    tableCards = createHand([3, 4, 6, 8, 8], ['h','c','s','s','d']);
+    const testScoreObj = getWinner(playerData, tableCards);
+    expect(testScoreObj).toMatchObject({
+      type: expect.any(String),
+      score: expect.any(Number),
+      cardsUsed: expect.any(Array),
+      highHandCards: expect.any(Array),
+      owner: expect.any(String),
+    });
+    expect(testScoreObj.owner).toEqual('player');
+  });
+
+  test("should determine a winner between 2 players with very different hands", () => {
+    playerData.ai1.active = playerData.ai2.active = false;
+
+    playerData.player.hand = createHand([2, 2], ['h', 's']); // full house 2s over 8s
+    playerData.ai3.hand = createHand([8, 6], ['h', 'c']); // 3 of a kind
+    tableCards = createHand([2, 3, 5, 8, 8], ['d','c','s','s','d']);
+    let testScoreObj = getWinner(playerData, tableCards);
+    expect(testScoreObj.owner).toEqual('player');
+
+    playerData.player.hand = createHand([2, 2], ['h', 's']); // 4 of a kind
+    playerData.ai3.hand = createHand([8, 6], ['h', 'c']); // 2 pair
+    tableCards = createHand([2, 2, 10, 8, 10], ['d','c','s','s','d']);
+    testScoreObj = getWinner(playerData, tableCards);
+    expect(testScoreObj.owner).toEqual('player');
+  });
+
+  test("should determine a winner between 2 players with similar hands", () => {
+    playerData.ai1.active = playerData.ai2.active = false;
+
+    playerData.player.hand = createHand([4, 2], ['h', 's']); // 9-high straight
+    playerData.ai3.hand = createHand([8, 10], ['h', 'c']); // 10-high straight
+    tableCards = createHand([5, 6, 7, 8, 9], ['d','c','s','s','d']);
+    let testScoreObj = getWinner(playerData, tableCards);
+    expect(testScoreObj.owner).toEqual('ai3');
+
+    playerData.player.hand = createHand([13, 12], ['h', 's']); // full house Aces over Kings
+    playerData.ai3.hand = createHand([12, 12], ['h', 'c']); // full house Aces over Queens
+    tableCards = createHand([14, 14, 14, 13, 4], ['d','c','s','s','d']);
+    testScoreObj = getWinner(playerData, tableCards);
+    expect(testScoreObj.owner).toEqual('player');
+
+    playerData.player.hand = createHand([8, 7], ['h', 's']); // 2 pair 8s over 7s
+    playerData.ai3.hand = createHand([8, 5], ['c', 'c']); // 2 pair 8s over 5s
+    tableCards = createHand([8, 7, 5, 13, 4], ['d','c','s','s','d']);
+    testScoreObj = getWinner(playerData, tableCards);
+    expect(testScoreObj.owner).toEqual('player');
+
+    playerData.player.hand = createHand([9, 2], ['c', 'c']); // flush king-high (high 9 in hole)
+    playerData.ai3.hand = createHand([12, 5], ['c', 'c']); // flush king-high (high queen in hole)
+    tableCards = createHand([3, 7, 13, 13, 4], ['c','c','c','s','d']);
+    testScoreObj = getWinner(playerData, tableCards);
+    expect(testScoreObj.owner).toEqual('ai3');
+  });
+
+  test("should determine a winner between 3 players", () => {
+    playerData.ai1.active = false;
+
+    // far off
+    playerData.player.hand = createHand([8, 8], ['h', 's']); // 4 of a kind
+    playerData.ai2.hand = createHand([4, 13], ['h', 'c']); // high card
+    playerData.ai3.hand = createHand([6, 6], ['h', 'c']); // 3 of a kind
+    tableCards = createHand([2, 3, 6, 8, 8], ['d','c','s','c','d']);
+    let testScoreObj = getWinner(playerData, tableCards);
+    expect(testScoreObj.owner).toEqual('player');
+
+    // close
+    playerData.player.hand = createHand([11, 11], ['h', 'c']); // 2 pair Queens over Jacks
+    playerData.ai2.hand = createHand([10, 5], ['h', 'c']); // 2 pair Queens over 10s
+    playerData.ai3.hand = createHand([13, 4], ['h', 's']); // 2 pair Kings over Queens
+    tableCards = createHand([2, 10, 13, 12, 12], ['d','c','s','s','d']);
+    testScoreObj = getWinner(playerData, tableCards);
+    expect(testScoreObj.owner).toEqual('ai3');
+  })
+
+  test("should determine a winner between 4 players", () => {
+    
+    playerData.player.hand = createHand([9, 9], ['h', 'c']); // 2 pair Queens over 9s
+    playerData.ai1.hand = createHand([11, 11], ['h', 'c']); // 2 pair Queens over Jacks
+    playerData.ai2.hand = createHand([10, 5], ['h', 'c']); // 2 pair Queens over 10s
+    playerData.ai3.hand = createHand([13, 4], ['h', 's']); // 2 pair Kings over Queens
+    tableCards = createHand([2, 10, 13, 12, 12], ['d','c','s','s','d']);
+    const testScoreObj = getWinner(playerData, tableCards);
+    expect(testScoreObj.owner).toEqual('ai3');
+  })
+
+  // will not work until kicker logic is in place
+  xtest(`should always pick a winner (${stressMultiplier}x stress test)`, () => {
+    for (let i = 0; i < stressMultiplier; i++) {
       deck.reset();
-      playerData = {
-        player: { id: 'player', active: true, hand: [] },
-        ai1: { id: 'ai1', active: true, hand: [] },
-        ai2: { id: 'ai2', active: true, hand: [] },
-        ai3: { id: 'ai3', active: true, hand: [] },
-      };
-      tableCards = [];
-    })
-
-    test("should return active player's score object when only one player is active (not folded)", () => {
-      playerData.ai1.active = playerData.ai2.active = playerData.ai3.active = false;
-      playerData.player.hand = createHand([2, 2], ['h', 's']);
-      tableCards = createHand([3, 4, 6, 8, 8], ['h','c','s','s','d']);
-      const testScoreObj = getWinner(playerData, tableCards);
-      expect(testScoreObj).toMatchObject({
+      playerData.player.hand = [deck.dealCard(), deck.dealCard()];
+      playerData.ai1.hand = [deck.dealCard(), deck.dealCard()];
+      playerData.ai2.hand = [deck.dealCard(), deck.dealCard()];
+      playerData.ai3.hand = [deck.dealCard(), deck.dealCard()];
+      const tableCards = new Array(5).fill(null).map(e => deck.dealCard());
+      const stressScoreObject = getWinner(playerData, tableCards);
+      expect(stressScoreObject).toMatchObject({
         type: expect.any(String),
         score: expect.any(Number),
-        holeCardsScore: expect.any(Number),
         cardsUsed: expect.any(Array),
-        highHoleCards: expect.any(Array),
         highHandCards: expect.any(Array),
         owner: expect.any(String),
       });
-      expect(testScoreObj.owner).toEqual('player');
-    });
-
-    test("should determine a winner between 2 players with very different hands", () => {
-      playerData.ai1.active = playerData.ai2.active = false;
-
-      playerData.player.hand = createHand([2, 2], ['h', 's']); // full house 2s over 8s
-      playerData.ai3.hand = createHand([8, 6], ['h', 'c']); // 3 of a kind
-      tableCards = createHand([2, 3, 5, 8, 8], ['d','c','s','s','d']);
-      let testScoreObj = getWinner(playerData, tableCards);
-      expect(testScoreObj.owner).toEqual('player');
-
-      playerData.player.hand = createHand([2, 2], ['h', 's']); // 4 of a kind
-      playerData.ai3.hand = createHand([8, 6], ['h', 'c']); // 2 pair
-      tableCards = createHand([2, 2, 10, 8, 10], ['d','c','s','s','d']);
-      testScoreObj = getWinner(playerData, tableCards);
-      expect(testScoreObj.owner).toEqual('player');
-    });
-
-    test("should determine a winner between 2 players with similar hands", () => {
-      playerData.ai1.active = playerData.ai2.active = false;
-
-      playerData.player.hand = createHand([4, 2], ['h', 's']); // 9-high straight
-      playerData.ai3.hand = createHand([8, 10], ['h', 'c']); // 10-high straight
-      tableCards = createHand([5, 6, 7, 8, 9], ['d','c','s','s','d']);
-      let testScoreObj = getWinner(playerData, tableCards);
-      expect(testScoreObj.owner).toEqual('ai3');
-
-      playerData.player.hand = createHand([13, 12], ['h', 's']); // full house Aces over Kings
-      playerData.ai3.hand = createHand([12, 12], ['h', 'c']); // full house Aces over Queens
-      tableCards = createHand([14, 14, 14, 13, 4], ['d','c','s','s','d']);
-      testScoreObj = getWinner(playerData, tableCards);
-      expect(testScoreObj.owner).toEqual('player');
-
-      playerData.player.hand = createHand([8, 7], ['h', 's']); // 2 pair 8s over 7s
-      playerData.ai3.hand = createHand([8, 5], ['c', 'c']); // 2 pair 8s over 5s
-      tableCards = createHand([8, 7, 5, 13, 4], ['d','c','s','s','d']);
-      testScoreObj = getWinner(playerData, tableCards);
-      expect(testScoreObj.owner).toEqual('player');
-
-      playerData.player.hand = createHand([9, 2], ['c', 'c']); // flush king-high (high 9 in hole)
-      playerData.ai3.hand = createHand([12, 5], ['c', 'c']); // flush king-high (high queen in hole)
-      tableCards = createHand([3, 7, 13, 13, 4], ['c','c','c','s','d']);
-      testScoreObj = getWinner(playerData, tableCards);
-      expect(testScoreObj.owner).toEqual('ai3');
-    });
-
-    test("should determine a winner between 3 players", () => {
-      playerData.ai1.active = false;
-
-      // far off
-      playerData.player.hand = createHand([8, 8], ['h', 's']); // 4 of a kind
-      playerData.ai2.hand = createHand([4, 13], ['h', 'c']); // high card
-      playerData.ai3.hand = createHand([6, 6], ['h', 'c']); // 3 of a kind
-      tableCards = createHand([2, 3, 6, 8, 8], ['d','c','s','c','d']);
-      let testScoreObj = getWinner(playerData, tableCards);
-      expect(testScoreObj.owner).toEqual('player');
-
-      // close
-      playerData.player.hand = createHand([11, 11], ['h', 'c']); // 2 pair Queens over Jacks
-      playerData.ai2.hand = createHand([10, 5], ['h', 'c']); // 2 pair Queens over 10s
-      playerData.ai3.hand = createHand([13, 4], ['h', 's']); // 2 pair Kings over Queens
-      tableCards = createHand([2, 10, 13, 12, 12], ['d','c','s','s','d']);
-      testScoreObj = getWinner(playerData, tableCards);
-      expect(testScoreObj.owner).toEqual('ai3');
-    })
-
-    test("should determine a winner between 4 players", () => {
-      
-      playerData.player.hand = createHand([9, 9], ['h', 'c']); // 2 pair Queens over 9s
-      playerData.ai1.hand = createHand([11, 11], ['h', 'c']); // 2 pair Queens over Jacks
-      playerData.ai2.hand = createHand([10, 5], ['h', 'c']); // 2 pair Queens over 10s
-      playerData.ai3.hand = createHand([13, 4], ['h', 's']); // 2 pair Kings over Queens
-      tableCards = createHand([2, 10, 13, 12, 12], ['d','c','s','s','d']);
-      testScoreObj = getWinner(playerData, tableCards);
-      expect(testScoreObj.owner).toEqual('ai3');
-    })
-
-  });
+    }
+  })
 
 });
