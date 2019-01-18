@@ -26,7 +26,7 @@ class ScoreCache {
 
 let cache = new ScoreCache();
 
-// helper function to build a score object from a hand
+// primary function to build a score object from a hand
 const getScoreObject = (hand) => {
   const [cached, cacheString] = cache.checkCache(hand);
   if (cached) return cached;
@@ -164,4 +164,6 @@ const getScore = (holeCards, tableCards, owner) => {
   return bestScoreObject;
 }
 
-export { getScore, getScoreObject, scoreHoleCards, ScoreCache };
+const getWinner = () => {};
+
+export { getScore, getScoreObject, scoreHoleCards, ScoreCache, getWinner };
