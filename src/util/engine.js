@@ -80,7 +80,7 @@ const getScoreObject = (hand) => {
       }
       if (cardSet.length === 3) { // check for 3 of a kind/full house
         if (firstPair) {
-          scoreObject = { score: 6, type: 'a full house', cardsUsed: hand, highHandCards: [cardSet[0]]};
+          scoreObject = { score: 6, type: 'a full house', cardsUsed: hand, highHandCards: [cardSet[0], firstPair[0]]};
           break;
         }
         else {
@@ -89,7 +89,7 @@ const getScoreObject = (hand) => {
         }
       }
       if (cardSet.length === 2) { // check for pair/full house
-        if (threeOfAKind) {// will also serve as cardsUsed
+        if (threeOfAKind) {
           scoreObject = { score: 6, type: 'a full house', cardsUsed: hand, highHandCards: [threeOfAKind[0]]};
           break;
         }
@@ -167,10 +167,65 @@ const getScore = (holeCards, tableCards, owner) => {
   const { score, cards } = scoreHoleCards(holeCards);
   bestScoreObject.holeCardsScore = score;
   bestScoreObject.highHoleCards = cards;
-  // console.log('cache hits so far: ', cache.hits)
+  bestScoreObject.owner = owner;
   return bestScoreObject;
 }
 
-const getWinner = () => {};
+const getWinner = (playerData, tableCards) => {
+  /* sample playerData
+    player: { id: 'player', active: true, hand: [] },
+    ai1: { id: 'ai1', active: true, hand: [] },
+    ai2: { id: 'ai2', active: true, hand: [] },
+    ai3: { id: 'ai3', active: true, hand: [] },
+  }*/
+
+  /* sample scoreObject from getScore:
+    type: expect.any(String),
+    score: expect.any(Number),
+    holeCardsScore: expect.any(Number),
+    cardsUsed: expect.any(Array),
+    highHoleCards: expect.any(Array),
+    highHandCards: expect.any(Array),
+    owner: expect.any(String)
+  */
+
+  // create an array of all active player's hands (hole cards)
+  const playerHandsArray = Object.values(playerData).reduce((arr, data) => {
+    if (data.active) arr.push(data);
+    return arr;
+  }, []);
+
+  if (playerHandsArray.length < 1) {
+    throw new Error('getWinner: Unable to compute winner. Ensure at least one player is marked "active"');
+  }
+
+  // for each active player, compare against the next player in the array, carrying the best one for next comparison
+  return playerHandsArray.reduce((best, currPlayerData) => {
+
+    const curr = getScore(currPlayerData.hand, tableCards, currPlayerData.id);
+    if (!best) best = curr;
+    else {
+      if (curr.score === best.score) {
+        // same type of hand, is there winner between the high *hand* cards?
+        console.log(`highHandCards comparison... ${best.owner}:\n`, best.highHandCards.map(e => e.value), `\n${curr.owner}:\n`, curr.highHandCards.map(e => e.value));
+        const { bestScoreObject: tieBreaker, draw: handCardTie } = compareByHighHandCards(best, curr);
+        if (handCardTie) {
+          // TODO: implement kicker cards
+          throw new Error("getWinner: We're not equipped to deal with kicker cards yet");
+        } else {
+          console.log('Tie broken by high hand card');
+          best = tieBreaker;
+        }
+      }
+      else if (curr.score > best.score) best = curr;
+    }
+
+    return best;
+
+  }, null);
+
+  // return the best one
+
+};
 
 export { getScore, getScoreObject, scoreHoleCards, ScoreCache, getWinner };

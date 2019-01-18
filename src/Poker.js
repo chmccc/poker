@@ -14,6 +14,7 @@ const addToTableCards = (oldTableCards, numNewCards) => {
 
 class Poker extends Component {
   constructor(props) {
+    console.log('Poker container init');
     super(props);
     this.state = {
       playerData: {
