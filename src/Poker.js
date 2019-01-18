@@ -16,7 +16,6 @@ const addToTableCards = (oldTableCards, numNewCards) => {
 
 class Poker extends Component {
   constructor(props) {
-    console.log('Poker container init');
     super(props);
     this.state = {
       playerData: {
@@ -81,8 +80,7 @@ class Poker extends Component {
         infoMessages.add(`You had ${playerScoreObj.type}`);
       }
       // highlight cards used in winning hand
-      const {tableCards, playerData} = this.getHighlightedWinnerCards(winnerObj.owner, winnerObj.cardsUsed)
-      console.log('highlight results:\n tablecards: ', tableCards, 'playerdata: ', playerData);
+      const {tableCards, playerData} = this.getHighlightedWinnerCards(winnerObj.owner, winnerObj.cardsUsed);
       this.setState({
         playerData,
         tableCards,
