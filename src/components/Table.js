@@ -1,7 +1,7 @@
 import React from 'react';
 import Card from './Card';
 
-const Table = ({cards}) => {
+const Table = ({cards, fold}) => {
 
   return (
     <div className="Table">
