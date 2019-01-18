@@ -140,8 +140,7 @@ const getScoreRecursively = (hand) => {
       if (!bestScoreObject) bestScoreObject = newScoreObject;
       else if (newScoreObject.score > bestScoreObject.score) bestScoreObject = newScoreObject;
       else if (newScoreObject.score === bestScoreObject.score) {
-        // will use draw boolean later...
-        const { bestScoreObject: bestScoreObjectByComparison, draw } = compareByHighHandCards(bestScoreObject, newScoreObject);
+        const { bestScoreObject: bestScoreObjectByComparison } = compareByHighHandCards(bestScoreObject, newScoreObject);
         bestScoreObject = bestScoreObjectByComparison;
       }
     }
@@ -195,7 +194,7 @@ const getWinner = (playerData, tableCards) => {
         const { bestScoreObject: tieBreaker, draw: handCardTie } = compareByHighHandCards(best, curr);
         if (handCardTie) {
           // TODO: implement kicker cards
-          throw new Error("getWinner: We're not equipped to deal with kicker cards yet");
+          throw new Error("getWinner: We're not equipped to deal with kicker cards yet. Please reload and try again.");
         } else {
           // console.log('Tie broken by high hand card');
           best = tieBreaker;

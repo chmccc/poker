@@ -42,8 +42,9 @@ class Card {
     this.isAce = val === 14;
     this.displayName = `${cardNames[val]} of ${suit}`;
     this.short = getShort(val);
-    this.handPosition = null;
+    this.highlight = false;
   }
+  
 }
 
 class Deck {

@@ -1,14 +1,16 @@
 import React, { Component } from 'react';
-import { Deck } from './util/deck.js';
+import { Deck, Card } from './util/deck.js';
 import Table from './components/Table.js';
 import PlayerDashboard from './components/PlayerDashboard';
 import AI from './components/AI';
 import { InfoMessagesQueue } from './util/infoMessagesQueue';
 import InfoPanel from './components/InfoPanel';
+import { getWinner, getScore } from './util/engine.js';
 
 const deck = new Deck();
 
 const addToTableCards = (oldTableCards, numNewCards) => {
+
   return oldTableCards.concat(Array(numNewCards).fill(null).map(() => deck.dealCard()))
 }
 
@@ -35,8 +37,6 @@ class Poker extends Component {
   deal = () => {
     const { gameStage, playerIsActive } = this.state;
     let infoMessages = this.state.infoMessages.copy();
-    console.log('deal! gamestage: ', gameStage);
-    console.log('player is still playing: ', playerIsActive);
     if (gameStage === 0) { // deal players cards
       infoMessages.add('Hole cards dealt.')
       this.setState({
@@ -51,6 +51,7 @@ class Poker extends Component {
         infoMessages,
       });
     }
+
     if (gameStage === 1) { // deal the flop
       infoMessages.add('Flop dealt.')
       const newTableCards = addToTableCards(this.state.tableCards, 3);
@@ -61,6 +62,7 @@ class Poker extends Component {
         infoMessages,
       });
     }
+
     if (gameStage === 2 || gameStage === 3) { // deal the turn/river
       infoMessages.add(gameStage === 2 ? 'Turn dealt.' : 'River dealt.');
       const newTableCards = addToTableCards(this.state.tableCards, 1);
@@ -72,9 +74,18 @@ class Poker extends Component {
       });
     }
     if (gameStage === 4) {
-      // todo: get winner from engine
-      infoMessages.add('Game over. <<WINNER INFO>>', 'You had: <<PLAYER BEST HAND>>')
+      const winnerObj = getWinner(this.state.playerData, this.state.tableCards);
+      const playerScoreObj = playerIsActive ? getScore(this.state.playerData.player.hand, this.state.tableCards, 'player') : null;
+      infoMessages.add(`Game over. ${winnerObj.owner} won with ${winnerObj.type}.`);
+      if (winnerObj.owner !== 'player' && playerIsActive) {
+        infoMessages.add(`You had ${playerScoreObj.type}`);
+      }
+      // highlight cards used in winning hand
+      const {tableCards, playerData} = this.getHighlightedWinnerCards(winnerObj.owner, winnerObj.cardsUsed)
+      console.log('highlight results:\n tablecards: ', tableCards, 'playerdata: ', playerData);
       this.setState({
+        playerData,
+        tableCards,
         displayAICards: true,
         gameStage: gameStage + 1,
         playerOptions: { fold: false, call: false, deal: false, newGame: true },
@@ -82,6 +93,32 @@ class Poker extends Component {
       });
     }
     if (!playerIsActive && gameStage < 4) setTimeout(this.deal, 2000);
+  }
+
+  getHighlightedWinnerCards = (winner, usedCards) => {
+
+    // array -> obj
+    const used = usedCards.reduce((acc, card) => {
+      acc[card.displayName] = card;
+      return acc;
+    }, {});
+
+    const shouldHighlight = (card) => {
+      if (used[card.displayName]) {
+        const newCard = new Card(card.value, card.suit);
+        newCard.highlight = true;
+        return newCard;
+      } else return card;
+    }
+
+    const tableCards = this.state.tableCards.map(card => shouldHighlight(card));
+    const newHandCards = this.state.playerData[winner].hand.map(card => shouldHighlight(card));
+
+    // dupe all playerData except winner's
+    const playerData = { ...this.state.playerData, [winner]: { ...this.state.playerData[winner], hand: newHandCards} };
+
+    return { tableCards, playerData };
+
   }
 
   newGame = () => {

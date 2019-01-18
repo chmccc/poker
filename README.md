@@ -8,10 +8,12 @@
 
 - test & build score object creator for 5-card hands ✔️
 - test & build best score function for 7-card hands ✔️
+- determine winners between hands ✔️
+- determine winners based on kicker cards
 
 ### Ability to fold
 
-- not scoring a folded player
+- not scoring a folded player ✔️
 
 ### Ability to bet
 
@@ -28,8 +30,9 @@
 ### Display
 
 - show a tabletop with 4 positions and space for table cards ✔️
-- show controls at the bottom right
 - should show a "next stage" button initially ✔️
+- should highlight cards used in winning hand once round is over ✔️
+- show controls at the bottom right
 
 ### Folding
 
@@ -39,5 +42,5 @@
 
 
 ### Message window
-- should report the winner of a hand
-- should report when a hand was won by a high card
+- should report the winner of a hand ✔️
+- should report when a hand was won by a high card ✔️
