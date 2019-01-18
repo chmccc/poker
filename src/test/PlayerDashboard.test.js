@@ -9,12 +9,12 @@ Enzyme.configure({ adapter: new Adapter() });
 
 describe('PlayerDashboard component render tests', () => {
   test('it renders', () => {
-    const wrapper = shallow(<PlayerDashboard data={{ hand: [] }}/>);
+    const wrapper = shallow(<PlayerDashboard data={{ hand: [] }} options={{}} />);
     expect(wrapper.exists()).toBe(true);
   });
 
   test('it renders Cards when given player hand data', () => {
-    const wrapper = mount(<PlayerDashboard data={{ hand: [new deck.Card(14, 'Hearts'), new deck.Card(13, 'Hearts')] }} />);
+    const wrapper = mount(<PlayerDashboard data={{ hand: [new deck.Card(14, 'Hearts'), new deck.Card(13, 'Hearts')] }} options={{}} />);
     expect(wrapper.find(Card)).toHaveLength(2);
   });
 })
