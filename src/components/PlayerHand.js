@@ -1,10 +1,10 @@
 import React from 'react';
 import Card from './Card.js';
 
-const PlayerHand = ({cards}) => {
+const PlayerHand = ({hand}) => {
   return (
     <div className="PlayerHand">
-      {cards.map(card => (
+      {hand.map(card => (
         <Card
           key={`player${card.displayName}`}
           width={200}
