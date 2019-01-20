@@ -1,19 +1,31 @@
 import React from 'react';
 
 const OptionsPanel = ({ options, callbacks }) => {
-
+  console.log('options: ', options)
   return (
     <div id="options-wrapper">
       <h4>Options</h4>
       <div id="PlayerOptions">
-      {Object.keys(options).map(optionName => <button
-          key={`option-${optionName}`}
-          className={`playerOption-button${options[optionName] ? '' : ' button-disabled'}`}
-          onClick={() => callbacks[optionName]('player')}
-          disabled={!options[optionName]}>
-            {`${optionName}`}
-          </button>
-      )}
+        <button
+          className={`playerOption-button${options.Deal ? '' : ' button-disabled'}`}
+          onClick={() => callbacks.Deal('player')}
+          disabled={!options.Deal}
+        >Deal</button>
+        <button
+          className={`playerOption-button${options["New Game"] ? '' : ' button-disabled'}`}
+          onClick={() => callbacks["New Game"]('player')}
+          disabled={!options["New Game"]}
+        >New Game</button>
+        <button
+          className={`playerOption-button${options.Call ? '' : ' button-disabled'}`}
+          onClick={() => callbacks.Call('player')}
+          disabled={!options.Call}
+        >Call</button>
+        <button
+          className={`playerOption-button${options.Fold ? '' : ' button-disabled'}`}
+          onClick={() => callbacks.Fold('player')}
+          disabled={!options.Fold}
+        >Fold</button>
       </div>
     </div>
   )

@@ -17,7 +17,7 @@ const AI = ({data, showCards}) => {
       className={`playerBox${data.id === 'ai2' ? ' playerBox-top' : ''}`}
       style={{gridArea: data.id}}
     >
-      <h4 className="player-title">AI Opponent</h4>
+      <h4 className="player-title">{`AI Opponent ${data.id.slice(-1)}`}</h4>
       <div className="ai" >
         <div className="ai-card-container">
           {cardContainer}

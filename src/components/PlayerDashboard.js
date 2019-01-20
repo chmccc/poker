@@ -6,12 +6,14 @@ const PlayerDashboard = ({ data, options, callbacks }) => {
 
   return (
     <div id="PlayerDashboard">
-      <h4 
-        className="player-title"
-        style={{gridArea: 'playerName'}}
-      >
-        {`Player${ data.active ? '' : ' (folded)'}`}
-      </h4>
+      <div id="status-wrapper">
+        <h4 
+          className="player-title"
+          style={{gridArea: 'playerName'}}
+          >
+          {`Player${ data.active ? '' : ' (folded)'}`}
+        </h4>
+      </div>
       <PlayerHand hand={data.hand} />
       <OptionsPanel options={options} callbacks={callbacks} />
     </div>
