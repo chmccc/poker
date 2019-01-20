@@ -13,8 +13,7 @@ const AI = ({data, showCards}) => {
     />
   )) : <p>Folded!</p>
   return (
-    <div className={`${data.id === 'ai2' ? 'ai-top' : 'ai'}`} style={{gridArea: `${data.id}`}}>
-      <h2>{data.id}</h2>
+    <div className={`${data.id === 'ai2' ? 'ai-top' : 'ai'}`}>
       <div className="ai-card-container">
         {cardContainer}
       </div>

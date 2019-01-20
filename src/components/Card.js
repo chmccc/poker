@@ -2,10 +2,19 @@ import React from 'react';
 import CardBack from '../images/cardback.jpg';
 
 const Card = ({shown, card, width, location}) => {
-  
+
   if (!shown) return <img src={CardBack} width={`${width}px`} height={`${width * 1.4}px`} alt="Cardback"/>
-  const symbolFontSize = location === 'player' ? '6em' : '3em';
-  const titleFontSize = location === 'player' ? '3em' : '2em';
+  
+  let symbolFontSize;
+  let titleFontSize;
+  if (location === 'player') {
+    symbolFontSize = '6em';
+    titleFontSize = '3em';
+  } else {
+    titleFontSize = '2em';
+    if (location === 'ai') symbolFontSize = '2em';
+    else symbolFontSize = '3em'
+  }
 
   const cardStyle = {
     width: `${width}px`,
