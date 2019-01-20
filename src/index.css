@@ -2,33 +2,44 @@
   border: 1px dotted black;
 } */
 
+@font-face {
+  font-family: Pokerface;
+  src: url('./assets/fonts/Poker.woff') format("woff");
+}
+
 body {
   width: 100%;
   display: flex;
   justify-content: center;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
+  font-family: "Contrail One", cursive, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: darkgreen;
+  background-image: url('./assets/images/woodgrain-large.jpg');
+  background-size: cover;
+  padding-top: 30px;
 }
 
-.App {
-  max-width: 1280px;
+#Poker {
+  padding-top: 10px;
+  margin: 0 auto;
+  max-width: 1000px;
   color: white;
   display: grid;
   width: 100vw;
   grid-template-columns: 20% 60% 20%;
-  grid-template-rows: 120px 200px 250px 300px;
+  grid-template-rows: 68px 130px 150px 200px;
   grid-template-areas: 
     "infopanel infopanel infopanel"
     ". ai2 ."
     "ai1 table ai3"
     "player player player";
+  background-color: darkgreen;
+  border-radius: 20px;
 }
 
-#infopanel {
+/* INFOBOX */
+
+#InfoPanel {
   width: 100%;
   grid-area: infopanel;
   display: flex;
@@ -38,7 +49,41 @@ body {
 }
 
 .info-message {
+  font-size: 12px;
   margin: 1px 20px;
+}
+
+/* CARDS & CARD CONTAINERS */
+
+#Table {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  grid-area: table;
+  padding-left: 30px;
+}
+
+.playerBox {
+  margin: 0 auto;
+  width: 100%;
+}
+
+.player-title {
+  margin: 2px auto;
+  text-align: center;
+  font-family: Courgette;
+}
+
+.playerBox-top {
+  max-width: 280px;
+}
+
+.ai-card-container {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  margin: 0 auto;
+  justify-content: center;
 }
 
 .Card {
@@ -58,29 +103,44 @@ body {
 }
 
 .card-title {
-  align-self: 'flex-start';
+  font-family: Pokerface;
+  margin: 10% auto 20% auto;
+  align-self: flex-start;
 }
 
-.Table {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  grid-area: table;
-  padding-left: 30px;
-}
+/* PLAYER DASHBOARD */
 
-.PlayerDashboard {
+#PlayerDashboard {
   grid-area: player;
   display: grid;
-  grid-template-columns: 20% 55% 25%;
+  grid-template-columns: 25% 50% 25%;
   grid-template-areas: "playerName playerCards playerOptions";
+}
+
+#PlayerHand {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+#PlayerHand .Card {
+  height: 90%;
+}
+
+#options-wrapper {
+  padding: 10px;
+  font-family: Courgette;
+}
+
+#options-wrapper h4 {
+  margin: 0 auto;
 }
 
 #PlayerOptions {
   display: grid;
   justify-items: center;
   align-items: center;
-  height: 50%;
+  height: 75%;
   grid-template-columns: 50% 50%;
 }
 
@@ -89,7 +149,8 @@ body {
   height: 40px;
   border-radius: 4px;
   box-shadow: 0 4px 8px 0 #1c3814, 0 6px 20px 0 #1c3814;
-  font-size: 1.2em;
+  font-size: 1em;
+  font-family: "Contrail One";
   -webkit-transition-duration: 0.4s; /* Safari */
   transition-duration: 0.4s;
 }
@@ -105,19 +166,4 @@ body {
 
 .button-disabled:hover {
   background-color: lightgrey;
-}
-
-.PlayerHand {
-  display: flex;
-  justify-content: center;
-}
-
-.ai-top {
-  display: flex;
-}
-
-.ai-card-container {
-  display: flex;
-  width: 100%;
-  flex-direction: row;
 }

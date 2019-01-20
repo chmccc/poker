@@ -3,11 +3,11 @@ import Card from './Card.js';
 
 const PlayerHand = ({hand}) => {
   return (
-    <div className="PlayerHand">
+    <div id="PlayerHand">
       {hand.map(card => (
         <Card
           key={`player${card.displayName}`}
-          width={200}
+          width={120}
           shown
           card={card}
           location="player"

@@ -4,11 +4,11 @@ import Card from './Card';
 const Table = ({cards, fold}) => {
 
   return (
-    <div className="Table">
+    <div id="Table">
       {cards.map(card => (
         <Card
           key={`table${card.displayName}`}
-          width={120}
+          width={80}
           shown
           card={card}
           location="table"

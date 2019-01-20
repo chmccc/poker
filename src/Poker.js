@@ -185,37 +185,28 @@ class Poker extends Component {
   render() {
     const { playerData, tableCards, displayAICards, playerOptions } = this.state;
     return (
-      <div className="App">
+      <div id="Poker">
         <InfoPanel
           messages={this.state.infoMessages}
         />
-        <div className="player-title" style={{gridArea: 'ai1'}}>
-          <h2>AI Opponent 1</h2>
-          <AI 
-            data={playerData.ai1}
-            tableCards={tableCards}
-            key={playerData.ai1.id}
-            showCards={displayAICards}
-          />
-        </div>
-        <div className="player-title" style={{gridArea: 'ai2'}}>
-          <h2>AI Opponent 2</h2>
-          <AI 
-            data={playerData.ai2}
-            tableCards={tableCards}
-            key={playerData.ai2}
-            showCards={displayAICards}
-          />
-        </div>
-        <div className="player-title" style={{gridArea: 'ai3'}}>
-          <h2>AI Opponent 3</h2>
-          <AI 
-            data={playerData.ai3}
-            tableCards={tableCards}
-            key={playerData.ai3.id}
-            showCards={displayAICards}
-          />
-        </div>
+        <AI 
+          data={playerData.ai1}
+          tableCards={tableCards}
+          key={playerData.ai1.id}
+          showCards={displayAICards}
+        />
+        <AI 
+          data={playerData.ai2}
+          tableCards={tableCards}
+          key={playerData.ai2}
+          showCards={displayAICards}
+        />
+        <AI 
+          data={playerData.ai3}
+          tableCards={tableCards}
+          key={playerData.ai3.id}
+          showCards={displayAICards}
+        />
         <Table cards={tableCards} />
         <PlayerDashboard 
           data={playerData.player}

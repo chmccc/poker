@@ -3,8 +3,8 @@ import React from 'react';
 const OptionsPanel = ({ options, callbacks }) => {
 
   return (
-    <div style={{padding: '10px'}}>
-      <h3>Options</h3>
+    <div id="options-wrapper">
+      <h4>Options</h4>
       <div id="PlayerOptions">
       {Object.keys(options).map(optionName => <button
           key={`option-${optionName}`}
