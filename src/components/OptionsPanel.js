@@ -1,7 +1,6 @@
 import React from 'react';
 
 const OptionsPanel = ({ options, callbacks }) => {
-  console.log('options: ', options)
   return (
     <div id="options-wrapper">
       <h4>Options</h4>
