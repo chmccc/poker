@@ -13,13 +13,13 @@ describe('InfoPanel component render tests', () => {
     q = new InfoMessagesQueue();
   });
 
-  test('it renders, with no content initially', () => {
+  xtest('it renders, with no content initially', () => {
     const wrapper = shallow(<InfoPanel messages={q} />);
     expect(wrapper.exists()).toBe(true);
     expect(wrapper.find('.info-message')).toHaveLength(0)
   });
 
-  test('it renders one message', () => {
+  xtest('it renders one message', () => {
     const wrapper = shallow(
       <InfoPanel
         messages={q.add('test1')}
@@ -28,7 +28,7 @@ describe('InfoPanel component render tests', () => {
     expect(wrapper.text('.info-message')).toContain('test1');
   });
 
-  test('it renders 4 messages', () => {
+  xtest('it renders 4 messages', () => {
     const msgs = ['test1', 'test2', 'test3', 'test4'];
     const wrapper = mount(
       <InfoPanel

@@ -1,13 +1,18 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 
-const InfoPanel = ({messages}) => {
-  // remember - messages is NOT an array it's an InfoMessagesQueue, use toArray to convert to array
+const InfoPanel = ({ messages }) => {
+
+  let div = useRef(null);
+
+  useEffect(() => { div.scrollTop = div.scrollHeight; }); // keep content scrolled to bottom
+
   return (
-    <div id="infopanel">
+    <div id="InfoPanel" ref={(el) => { div = el; }}>
       {messages.toArray().map(str => (
         <p
           key={`infomsg${str.slice(0, 40)}`}
-          className="info-message">{str}</p>
+          className="info-message">{str}
+        </p>
       ))}
     </div>
   )
