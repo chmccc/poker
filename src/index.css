@@ -1,6 +1,6 @@
-* {
+/* * {
   border: 1px dotted black;
-}
+} */
 
 body {
   width: 100%;
@@ -20,7 +20,7 @@ body {
   display: grid;
   width: 100vw;
   grid-template-columns: 20% 60% 20%;
-  grid-template-rows: 100px 200px 250px 300px;
+  grid-template-rows: 120px 200px 250px 300px;
   grid-template-areas: 
     "infopanel infopanel infopanel"
     ". ai2 ."
