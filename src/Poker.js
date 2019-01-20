@@ -31,7 +31,6 @@ const clonePlayerData = (oldPlayerData) => {
 
 }
 
-
 const fullNames = {
   ai1: "AI Opponent 1",
   ai2: "AI Opponent 2",
@@ -100,11 +99,30 @@ class Poker extends Component {
     }
 
     if (gameStage === 4) {
-      const winnerObj = getWinner(this.state.playerData, this.state.tableCards);
+      let winnerObj;
       const playerScoreObj = playerIsActive ? getScore(this.state.playerData.player.hand, this.state.tableCards, 'player') : null;
-      infoMessages.add(`Game over. ${fullNames[winnerObj.owner]} won with ${winnerObj.type}.`);
-      if (winnerObj.owner !== 'player' && playerIsActive) {
-        infoMessages.add(`You had ${playerScoreObj.type}`);
+      // todo: refactor when kicker cards no longer produce errors
+      try {
+        winnerObj = getWinner(this.state.playerData, this.state.tableCards);
+        infoMessages.add(`Game over. ${fullNames[winnerObj.owner]} won with ${winnerObj.type}.`);
+        if (winnerObj.owner !== 'player' && playerIsActive) {
+          infoMessages.add(`You had ${playerScoreObj.type}.`);
+        }
+      } catch(error) {
+        // stopgap: dummy winner obj
+        winnerObj = {
+          type: 'error',
+          score: 0,
+          cardsUsed: [],
+          highHandCards: [],
+          owner: 'player',
+        }
+        console.error('ERROR: Kicker card tiebreaker error.');
+        console.log('First score object:\n', error.dump.firstScoreObject);
+        console.log('Second score object:\n', error.dump.secondScoreObject);
+        infoMessages.add(
+          `***ERROR***: Computing a winner between ${error.dump.firstScoreObject.owner.toUpperCase()} and ${error.dump.secondScoreObject.owner.toUpperCase()}, both having ${error.dump.firstScoreObject.type.toUpperCase()}, required a tiebreaker using kicker cards. The game engine does not yet support this. See console for details.`
+        );
       }
       // highlight cards used in winning hand
       const {newTableCards, newPlayerData} = this.getHighlightedWinnerCards(winnerObj.owner, winnerObj.cardsUsed);
@@ -117,7 +135,7 @@ class Poker extends Component {
         infoMessages,
       });
     }
-    if (!playerIsActive && gameStage < 4) setTimeout(this.deal, 2000);
+    if (!playerIsActive && gameStage < 4) setTimeout(this.deal, 1000);
   }
 
   getHighlightedWinnerCards = (winner, usedCards) => {

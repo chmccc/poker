@@ -116,13 +116,13 @@ const getScoreObject = (hand) => {
 const compareByHighHandCards = (oldScoreObject, newScoreObject) => {
   for (let i = 0; i < newScoreObject.highHandCards.length; i++) {
     if (newScoreObject.highHandCards[i].value > oldScoreObject.highHandCards[i].value) {
-      return { draw: false, bestScoreObject: newScoreObject };
+      return { draw: false, bestScoreObject: newScoreObject, newScoreObject: null };
     }
     if (newScoreObject.highHandCards[i].value < oldScoreObject.highHandCards[i].value) {
-      return {draw: false, bestScoreObject: oldScoreObject };
+      return {draw: false, bestScoreObject: oldScoreObject, newScoreObject: null };
     }
   }
-  return { draw: true, bestScoreObject: oldScoreObject };
+  return { draw: true, bestScoreObject: oldScoreObject, newScoreObject };
 }
 
 const getScoreRecursively = (hand) => {
@@ -175,10 +175,14 @@ const getWinner = (playerData, tableCards) => {
     else {
       if (curr.score === best.score) {
         // same type of hand, is there a winner between the high *hand* cards?
-        const { bestScoreObject: tieBreaker, draw: handCardTie } = compareByHighHandCards(best, curr);
+        const { bestScoreObject: tieBreaker, draw: handCardTie, newScoreObject } = compareByHighHandCards(best, curr);
         if (handCardTie) {
+
           // TODO: implement kicker cards
-          throw new Error("getWinner: We're not equipped to deal with kicker cards yet. Please reload and try again.");
+          const error = new Error("getWinner: Kicker card tiebreaker error");
+          error.dump = {firstScoreObject: tieBreaker, secondScoreObject: newScoreObject};
+          throw error;
+
         } else best = tieBreaker;
       }
       else if (curr.score > best.score) best = curr;
