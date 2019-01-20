@@ -10,8 +10,33 @@ import { getWinner, getScore } from './util/engine.js';
 const deck = new Deck();
 
 const addToTableCards = (oldTableCards, numNewCards) => {
-
   return oldTableCards.concat(Array(numNewCards).fill(null).map(() => deck.dealCard()))
+}
+
+// helper function which clones a hand and all cards therein, applying an optional callback to each card
+const cloneHand = (hand, callback) => {
+  return hand.map(card => {
+    const newCard = new Card(card.value, card.suit);
+    if (card.highlight) newCard.highlight = true;
+    return callback ? callback(newCard) : newCard;
+  });
+}
+
+// helper function which deep clones a playerData object
+const clonePlayerData = (oldPlayerData) => {
+  return Object.values(oldPlayerData).reduce((playerData, playerObj) => {
+    playerData[playerObj.id] = { ...playerObj, hand: cloneHand(playerObj.hand) };
+    return playerData;
+  }, {});
+
+}
+
+
+const fullNames = {
+  ai1: "AI Opponent 1",
+  ai2: "AI Opponent 2",
+  ai3: "AI Opponent 3",
+  player: "Player",
 }
 
 class Poker extends Component {
@@ -25,7 +50,7 @@ class Poker extends Component {
         ai3: { id: 'ai3', active: true, hand: [] },
       },
       tableCards: [],
-      playerOptions: { fold: false, call: false, deal: true, newGame: false },
+      playerOptions: { Fold: false, Call: false, Deal: true, "New Game": false },
       displayAICards: false,
       gameStage: 0,
       playerIsActive: true,
@@ -34,18 +59,19 @@ class Poker extends Component {
   }
 
   deal = () => {
+
     const { gameStage, playerIsActive } = this.state;
     let infoMessages = this.state.infoMessages.copy();
+
     if (gameStage === 0) { // deal players cards
       infoMessages.add('Hole cards dealt.')
+      const newPlayerData = clonePlayerData(this.state.playerData);
+      Object.values(newPlayerData).forEach(playerObj => {
+        playerObj.hand = [deck.dealCard(), deck.dealCard()];
+      });
       this.setState({
-        playerData: {
-          player: {id: 'player', active: true, hand: [deck.dealCard(), deck.dealCard()]},
-          ai1: {id: 'ai1', active: true, hand: [deck.dealCard(), deck.dealCard()]},
-          ai2: {id: 'ai2', active: true, hand: [deck.dealCard(), deck.dealCard()]},
-          ai3: {id: 'ai3', active: true, hand: [deck.dealCard(), deck.dealCard()]}
-        },
-        playerOptions: { deal: false, fold: playerIsActive, call: playerIsActive, newGame: false },
+        playerData: newPlayerData,
+        playerOptions: { Deal: false, Fold: playerIsActive, Call: playerIsActive, "New Game": false },
         gameStage: gameStage + 1,
         infoMessages,
       });
@@ -56,7 +82,7 @@ class Poker extends Component {
       const newTableCards = addToTableCards(this.state.tableCards, 3);
       this.setState({
         tableCards: newTableCards,
-        playerOptions: { deal: false, fold: playerIsActive, call: playerIsActive, newGame: false },
+        playerOptions: { Deal: false, Fold: playerIsActive, Call: playerIsActive, "New Game": false },
         gameStage: gameStage + 1,
         infoMessages,
       });
@@ -67,26 +93,27 @@ class Poker extends Component {
       const newTableCards = addToTableCards(this.state.tableCards, 1);
       this.setState({
         tableCards: newTableCards,
-        playerOptions: { deal: false, fold: playerIsActive, call: playerIsActive, newGame: false },
+        playerOptions: { Deal: false, Fold: playerIsActive, Call: playerIsActive, "New Game": false },
         gameStage: gameStage + 1,
         infoMessages,
       });
     }
+
     if (gameStage === 4) {
       const winnerObj = getWinner(this.state.playerData, this.state.tableCards);
       const playerScoreObj = playerIsActive ? getScore(this.state.playerData.player.hand, this.state.tableCards, 'player') : null;
-      infoMessages.add(`Game over. ${winnerObj.owner} won with ${winnerObj.type}.`);
+      infoMessages.add(`Game over. ${fullNames[winnerObj.owner]} won with ${winnerObj.type}.`);
       if (winnerObj.owner !== 'player' && playerIsActive) {
         infoMessages.add(`You had ${playerScoreObj.type}`);
       }
       // highlight cards used in winning hand
-      const {tableCards, playerData} = this.getHighlightedWinnerCards(winnerObj.owner, winnerObj.cardsUsed);
+      const {newTableCards, newPlayerData} = this.getHighlightedWinnerCards(winnerObj.owner, winnerObj.cardsUsed);
       this.setState({
-        playerData,
-        tableCards,
+        playerData: newPlayerData,
+        tableCards: newTableCards,
         displayAICards: true,
         gameStage: gameStage + 1,
-        playerOptions: { fold: false, call: false, deal: false, newGame: true },
+        playerOptions: { Fold: false, Call: false, Deal: false, "New Game": true },
         infoMessages,
       });
     }
@@ -94,8 +121,7 @@ class Poker extends Component {
   }
 
   getHighlightedWinnerCards = (winner, usedCards) => {
-
-    // array -> obj
+    // create helper object of cards used for faster lookup
     const used = usedCards.reduce((acc, card) => {
       acc[card.displayName] = card;
       return acc;
@@ -109,13 +135,13 @@ class Poker extends Component {
       } else return card;
     }
 
-    const tableCards = this.state.tableCards.map(card => shouldHighlight(card));
-    const newHandCards = this.state.playerData[winner].hand.map(card => shouldHighlight(card));
+    const newTableCards = this.state.tableCards.map(card => shouldHighlight(card));
+    const newHandCards = cloneHand(this.state.playerData[winner].hand, shouldHighlight);
 
-    // dupe all playerData except winner's
-    const playerData = { ...this.state.playerData, [winner]: { ...this.state.playerData[winner], hand: newHandCards} };
-
-    return { tableCards, playerData };
+    // dupe all playerData then replace only winner's
+    const newPlayerData = clonePlayerData(this.state.playerData);
+    newPlayerData[winner] = { ...newPlayerData[winner], hand: newHandCards };
+    return { newTableCards, newPlayerData };
 
   }
 
@@ -129,7 +155,7 @@ class Poker extends Component {
         ai3: { id: 'ai3', active: true, hand: [] },
       },
       tableCards: [],
-      playerOptions: { fold: false, call: false, deal: true, newGame: false },
+      playerOptions: { Fold: false, Call: false, Deal: true, "New Game": false },
       displayAICards: false,
       gameStage: 0,
       playerIsActive: true,
@@ -138,9 +164,15 @@ class Poker extends Component {
   }
 
   fold = (playerID) => {
+    const newPlayerData = clonePlayerData(this.state.playerData);
+    newPlayerData[playerID].active = false;
+    const playerIsActive = playerID === 'player' ? false : this.state.playerIsActive;
+    const infoMessages = this.state.infoMessages.copy().add(`${fullNames[playerID]} folds.`);
     this.setState({
-      playerIsActive: false,
-      playerOptions: { fold: false, call: false, deal: false, newGame: false }
+      playerData: newPlayerData,
+      playerIsActive,
+      playerOptions: { Fold: false, Call: false, Deal: false, "New Game": false },
+      infoMessages,
     }, this.deal);
   }
 
@@ -157,33 +189,41 @@ class Poker extends Component {
         <InfoPanel
           messages={this.state.infoMessages}
         />
-        <AI 
-          data={playerData.ai1}
-          tableCards={tableCards}
-          key={playerData.ai1.id}
-          showCards={displayAICards}
-        />
-        <AI 
-          data={playerData.ai2}
-          tableCards={tableCards}
-          key={playerData.ai2}
-          showCards={displayAICards}
-        />
-        <AI 
-          data={playerData.ai3}
-          tableCards={tableCards}
-          key={playerData.ai3.id}
-          showCards={displayAICards}
-        />
+        <div className="player-title" style={{gridArea: 'ai1'}}>
+          <h2>AI Opponent 1</h2>
+          <AI 
+            data={playerData.ai1}
+            tableCards={tableCards}
+            key={playerData.ai1.id}
+            showCards={displayAICards}
+          />
+        </div>
+        <div className="player-title" style={{gridArea: 'ai2'}}>
+          <h2>AI Opponent 2</h2>
+          <AI 
+            data={playerData.ai2}
+            tableCards={tableCards}
+            key={playerData.ai2}
+            showCards={displayAICards}
+          />
+        </div>
+        <div className="player-title" style={{gridArea: 'ai3'}}>
+          <h2>AI Opponent 3</h2>
+          <AI 
+            data={playerData.ai3}
+            tableCards={tableCards}
+            key={playerData.ai3.id}
+            showCards={displayAICards}
+          />
+        </div>
         <Table cards={tableCards} />
         <PlayerDashboard 
           data={playerData.player}
           callbacks={{
-            fold: this.fold,
-            raise: this.raise,
-            call: this.call,
-            deal: this.deal,
-            newGame: this.newGame
+            Fold: this.fold,
+            Call: this.call,
+            Deal: this.deal,
+            "New Game": this.newGame
           }}
           options={playerOptions}
         />
