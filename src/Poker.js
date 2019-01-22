@@ -165,6 +165,7 @@ class Poker extends Component {
 
   newGame = () => {
     deck.reset();
+    console.clear();
     this.setState({
       playerData: {
         player: { id: 'player', active: true, hand: [] },

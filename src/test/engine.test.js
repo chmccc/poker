@@ -87,6 +87,9 @@ describe('getScoreObject tests', () => {
     expect(straightTestScoreObj.cardsUsed).toHaveLength(5);
     straightTestScoreObj = getScoreObject(createHand([2,3,4,5,14], ['s','c','d','h','s']));
     expect(straightTestScoreObj.score).toEqual(5);
+    // TODO: debug this test:
+    straightTestScoreObj = getScoreObject(createHand([2,3,4,14,14], ['h', 'c', 'd', 'h', 'c']));
+    expect(straightTestScoreObj.score).not.toEqual(5);
   });
 
   test('should properly analyze a flush', () => {

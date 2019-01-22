@@ -5,6 +5,50 @@
 
 // TODO: add JSDoc annotations
 
+/* --- DEBUG IMPORT --- 
+const suitEmojis = {
+  'Clubs': '♣️',
+  'Hearts': '♥️',
+  'Diamonds': '♦️',
+  'Spades': '♠️',
+}
+
+const cardNames = ['', 'Ace', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Jack', 'Queen', 'King', 'Ace'];
+
+const getShort = (val) => {
+  if (val === 1 || val === 14) return 'A';
+  if (val === 13) return 'K';
+  if (val === 12) return 'Q';
+  if (val === 11) return 'J';
+  return val.toString();
+}
+
+class Card {
+  constructor(val, suit) {
+    this.value = val === 1 ? 14 : val;
+    this.suit = suit;
+    this.suitEmoji = suitEmojis[suit];
+    this.color = (suit === 'Hearts' || suit === 'Diamonds') ? 'red' : 'black';
+    this.isAce = val === 14;
+    this.displayName = `${cardNames[val]} of ${suit}`;
+    this.short = getShort(val);
+    this.highlight = false;
+  }
+  
+}
+
+const createHand = (vals, suits) => {
+  suits.forEach((char, i) => suits[i] = char.toUpperCase());
+  const suitNames = { S: 'Spades', D: 'Diamonds', C: 'Clubs', H: 'Hearts' };
+  const output = [];
+  for (let i = 0; i < vals.length; i += 1) {
+    output.push(new Card(vals[i], suitNames[suits[i]]));
+  }
+  return output;
+}
+
+/* --- END DEBUG IMPORT --- */
+
 // caches all hands passed in regardless of size -- should improve performance in any function that looks for a best score from given cards
 class ScoreCache {
   constructor() {
@@ -42,6 +86,7 @@ const getScoreObject = (hand) => {
   // we'll detect straight and flush during loop 
   let hasStraight = true;
   let hasFlush = true;
+  let aceLowStraight = false;
   let scoreObject = { score: 0, type: 'a high card' }; // base score object
   const cardsByValue = {};
 
@@ -49,10 +94,13 @@ const getScoreObject = (hand) => {
   for (let i = 0; i < hand.length; i += 1) {
     const card = hand[i];
     if (i !== 0 && card.value !== hand[i - 1].value + 1) {
-      if (hasStraight && card.isAce && hand[0].value === 2) hasStraight = true; // back to true if hand is 2 3 4 5 A
+      if (hasStraight && card.isAce && hand[0].value === 2 && !aceLowStraight) {
+        aceLowStraight = true; // this prevents counting a ace-low "straight" with more than 1 ace as a real straight
+        hasStraight = true; // back to true if hand is 2 3 4 5 A
+      }
       else hasStraight = false;
     }
-    if (i !== 0 && card.suit !== hand[i - 1].suit) hasFlush = false;
+    if (i !== 0 && card.suit !== hand[i - 1].suit && hasFlush) hasFlush = false;
     if (!cardsByValue[card.value]) cardsByValue[card.value] = [];
     cardsByValue[card.value].push(card);
   }
@@ -193,5 +241,8 @@ const getWinner = (playerData, tableCards) => {
   }, null);
 
 };
+
+// const scoreObj = getScoreObject(createHand([2,3,4,14,14], ['h', 'c', 'd', 'h', 'c']));
+// console.log(scoreObj.score)
 
 export { getScore, getScoreObject, ScoreCache, getWinner };
