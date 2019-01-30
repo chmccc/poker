@@ -1,4 +1,4 @@
-import { Card } from './deck';
+import { Card, deck } from './deck';
 
 // helper function to build card arrays with shorthand input
 const createHand = (vals, suits) => {
@@ -11,4 +11,37 @@ const createHand = (vals, suits) => {
   return output;
 }
 
-export { createHand };
+// helper function which clones a hand and all cards therein, applying an optional callback to each card
+const cloneHand = (hand, callback) => {
+  return hand.map(card => {
+    const newCard = new Card(card.value, card.suit);
+    if (card.highlight) newCard.highlight = true;
+    return callback ? callback(hand) : newCard;
+  });
+}
+
+// helper function which deep clones a playerData object
+const clonePlayerData = (oldPlayerData) => {
+  return Object.values(oldPlayerData).reduce((playerData, playerObj) => {
+    playerData[playerObj.id] = { ...playerObj, hand: cloneHand(playerObj.hand) };
+    return playerData;
+  }, {});
+
+}
+
+// determines whether a card should be highlighted (returns a highlighted copy of card if so)
+const shouldHighlight = (card, used) => {
+  console.log('shouldHighlight used:', used, card)
+  if (used[card.displayName]) {
+    const newCard = new Card(card.value, card.suit);
+    newCard.highlight = true;
+    return newCard;
+  } else return card;
+}
+
+// helper function to append n new cards to tableCards array
+const addToTableCards = (oldTableCards, numNewCards) => {
+  return oldTableCards.concat(Array(numNewCards).fill(null).map(() => deck.dealCard()))
+}
+
+export { createHand, cloneHand, clonePlayerData, shouldHighlight, addToTableCards };

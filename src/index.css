@@ -20,41 +20,6 @@ body {
   margin: 0 auto !important;
 }
 
-#Poker {
-  padding-top: 10px;
-  margin: 0 auto;
-  max-width: 1000px;
-  color: white;
-  display: grid;
-  width: 950px;
-  grid-template-columns: 20% 60% 20%;
-  grid-template-rows: 68px 130px 150px 200px;
-  grid-row-gap: 10px;
-  grid-template-areas: 
-    "infopanel infopanel infopanel"
-    ". ai2 ."
-    "ai1 table ai3"
-    "player player player";
-  background-color: rgb(0, 80, 0);
-  border-radius: 20px;
-}
-
-/* INFOBOX */
-
-#InfoPanel {
-  width: 100%;
-  grid-area: infopanel;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  overflow: scroll;
-}
-
-.info-message {
-  font-size: 12px;
-  margin: 1px 20px;
-}
-
 /* CARDS & CARD CONTAINERS */
 
 #Table {
@@ -94,48 +59,7 @@ body {
   justify-content: center;
 }
 
-.Card {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-  box-shadow: 3px 4px rgba(0, 0, 0, .5);
-  border-radius: 3px;
-  margin: 8px;
-}
-
-.card-suit {
-  display: flex;
-  justify-content: center;
-}
-
-.card-title {
-  font-family: Pokerface;
-  margin: 10% auto 20% auto;
-  align-self: flex-start;
-}
-
 /* PLAYER DASHBOARD */
-
-#PlayerDashboard {
-  grid-area: player;
-  display: grid;
-  grid-template-columns: 25% 50% 25%;
-  grid-template-areas: "playerName playerCards playerOptions";
-}
-
-#status-wrapper {
-  padding: 10px 20px;
-}
-
-#status-wrapper h4 {
-  text-align: left;
-}
-
-#PlayerDashboard h4 {
-  margin: 0 auto;
-}
 
 #PlayerHand {
   margin: 0 auto;
@@ -146,49 +70,4 @@ body {
   justify-content: center;
   min-width: 350px;
   background-color: rgb(0, 61, 0);
-}
-
-#PlayerHand .Card {
-  height: 90%;
-}
-
-#options-wrapper {
-  padding: 10px;
-  font-family: Courgette;
-}
-
-#PlayerOptions {
-  display: grid;
-  justify-items: center;
-  align-items: center;
-  height: 75%;
-  grid-template-columns: 50% 50%;
-}
-
-.playerOption-button {
-  width: 90%;
-  height: 40px;
-  border-radius: 4px;
-  box-shadow: 0 4px 8px 0 #1c3814, 0 6px 20px 0 #1c3814;
-  font-size: 1em;
-  font-family: "Contrail One";
-  -webkit-transition-duration: 0.4s; /* Safari */
-  transition-duration: 0.4s;
-}
-
-.playerOption-button:hover {
-  background-color: lightgreen;
-}
-
-.button-disabled {
-  color: grey;
-  background-color: lightgrey;
-}
-
-.button-disabled:hover {
-  background-color: lightgrey;
-}
-
-button {
-  outline: none;
 }

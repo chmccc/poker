@@ -320,8 +320,9 @@ const kickerHighCard = (firstScoreObject, secondScoreObject, tableCards) => {
 }
 
 const kickerFuncSwitch = (best, curr, tableCards) => {
-
-  switch(best.score) {
+  // handle entire hand on table
+  const { score } = best;
+  switch(score) {
     case 7:
       // 4 of a kind on the table
       return kickerTable4(best, curr, tableCards);
@@ -338,6 +339,7 @@ const kickerFuncSwitch = (best, curr, tableCards) => {
       // the same high card
       return kickerHighCard(best, curr, tableCards);
     default:
+      console.log('error object: ', best, 'vs', curr)
       throw new Error('kickerFuncSwitch: No valid score prop on given score object.');
   }
 
@@ -355,6 +357,8 @@ const getWinner = (playerData, tableCards) => {
     throw new Error('getWinner: Unable to compute winner. Ensure at least one player is marked "active"');
   }
 
+  const fiveCardHands = new Set([8, 6, 5, 4]);
+  let fullHandOnTable = true;
   let kickerCardTie = false;
   let tableWinning = false;
   let tiesByKicker = { };
@@ -373,48 +377,61 @@ const getWinner = (playerData, tableCards) => {
       // same type of hand, is there a winner between the high *hand* cards?
       const { bestScoreObject: bestScoreObjectByHandCards, draw: handCardTie } = compareByHighHandCards(best, curr);
       if (handCardTie) {
-
         // if (debug) console.log(`hand card tie!: ${best.owner} vs. ${curr.owner} with score ${best.score} - ${best.type}`)
 
-        // BEGIN KICKER LOGIC
-
-        let { draw, tableWins, bestScoreObject } = kickerFuncSwitch(best, curr, tableCards);
-        // handle kicker card draw
-        if (draw) {
-          
-          // update outer (function-level) state
-          kickerCardTie = true;
-
-          // put both players into the kickerTies object (for pot splitting)
-          const { validKickers, highHandCards } = bestScoreObject;
-
-          // update the tie tracker object
-
-          // generate a key string from hand cards
-          let handKey = highHandCards.reduce((str, card, i) => i === 0 ? card.value.toString() : str + `_${card.value.toString()}`, '');
-
-          // generate key string from kicker values (e.g. "5_3" or just "5" if table beat the 3), or 'table' if theyre all on the table
-          let kickerKey = tableWins ? 'table' : validKickers.reduce((str, card, i) => i === 0 ? card.value.toString() : str + `_${card.value.toString()}`, '');
-
-          // update the tie tracker object
+        if (fiveCardHands.has(best.score)) {
+          // in five card hands, no kicker is possible. however, these hands can still tie
+          // TODO: separate this functionality into a helper function as it's repeated below
+          let handKey = best.highHandCards.reduce((str, card, i) => i === 0 ? card.value.toString() : str + `_${card.value.toString()}`, '');
+          const kickerKey = 'none';
           if (!tiesByKicker[best.score]) tiesByKicker[best.score] = {}
           if (!tiesByKicker[best.score][handKey]) tiesByKicker[best.score][handKey] = {}
           if (!tiesByKicker[best.score][handKey][kickerKey]) tiesByKicker[best.score][handKey][kickerKey] = {};
           tiesByKicker[best.score][handKey][kickerKey][curr.owner] = curr;
           tiesByKicker[best.score][handKey][kickerKey][best.owner] = best;
+          kickerCardTie = true;
+          best = curr;
 
-          // update table winning boolean
-          if (tableWins) tableWinning = true;
-          else tableWinning = false;
+        } else {
+
+          if (best.score >= Math.max(...Object.keys(tiesByKicker))) fullHandOnTable = false;
+
+          // BEGIN KICKER LOGIC
+
+          let { draw, tableWins, bestScoreObject } = kickerFuncSwitch(best, curr, tableCards);
+          // handle kicker card draw
+          if (draw) {
+            
+            // update outer (function-level) state
+            kickerCardTie = true;
+
+            // put both players into the kickerTies object (for pot splitting)
+            const { validKickers, highHandCards } = bestScoreObject;
+
+            // update the tie tracker object
+
+            // generate a key string from hand cards
+            let handKey = highHandCards.reduce((str, card, i) => i === 0 ? card.value.toString() : str + `_${card.value.toString()}`, '');
+
+            // generate key string from kicker values (e.g. "5_3" or just "5" if table beat the 3), or 'table' if theyre all on the table
+            let kickerKey = tableWins ? 'table' : validKickers.reduce((str, card, i) => i === 0 ? card.value.toString() : str + `_${card.value.toString()}`, '');
+
+            // update the tie tracker object
+            if (!tiesByKicker[best.score]) tiesByKicker[best.score] = {}
+            if (!tiesByKicker[best.score][handKey]) tiesByKicker[best.score][handKey] = {}
+            if (!tiesByKicker[best.score][handKey][kickerKey]) tiesByKicker[best.score][handKey][kickerKey] = {};
+            tiesByKicker[best.score][handKey][kickerKey][curr.owner] = curr;
+            tiesByKicker[best.score][handKey][kickerKey][best.owner] = best;
+
+            // update table winning boolean
+            if (tableWins) tableWinning = true;
+            else tableWinning = false;
+          }
+
+          // update best
+          best = bestScoreObject;
 
         }
-
-        // update best
-        best = bestScoreObject;
-        // what if there's a draw BUT all kickers are on the table? those players need to split the pot!
-
-
-        // END KICKER LOGIC SERIES
 
       } else {
         best = bestScoreObjectByHandCards;
@@ -430,16 +447,33 @@ const getWinner = (playerData, tableCards) => {
   }
 
   if (kickerCardTie) {
-    // generate a key string from hand cards
-    let handKey = best.highHandCards.reduce((str, card, i) => i === 0 ? card.value.toString() : str + `_${card.value.toString()}`, '');
-    
-    // generate key string from kicker values (e.g. "5_3" or just "5" if table beat the 3), or 'table' if theyre all on the table
-    let kickerKey = tableWinning ? 'table' : best.validKickers.reduce((str, card, i) => i === 0 ? card.value.toString() : str + `_${card.value.toString()}`, '');
+    let handKey, kickerKey;
+    try {
+      // generate a key string from hand cards
+      handKey = best.highHandCards.reduce((str, card, i) => i === 0 ? card.value.toString() : str + `_${card.value.toString()}`, '');
+      
+      // generate key string from kicker values (e.g. "5_3" or just "5" if table beat the 3), or 'table' if theyre all on the table
+      if (fiveCardHands.has(best.score)) kickerKey = 'none';
+      else kickerKey = tableWinning ? 'table' : best.validKickers.reduce((str, card, i) => i === 0 ? card.value.toString() : str + `_${card.value.toString()}`, '');
 
-    if (tiesByKicker[best.score][handKey][kickerKey]) {
-      // if (debug) console.log(`true draw! pot split between ${Object.keys(tiesByKicker[best.score][handKey][kickerKey]).join(' and ')}, both having ${best.type}`);
-      return tableWinning ? 'table_win_placeholder' : 'true_draw_placeholder';
-    } else return best;
+      if (tiesByKicker[best.score]
+        && tiesByKicker[best.score][handKey]
+        && tiesByKicker[best.score][handKey][kickerKey]) {
+        const winnersArray = Object.keys(tiesByKicker[best.score][handKey][kickerKey]);
+        return `
+          Draw! Pot is split between ${winnersArray.join(' and ')},
+          with ${winnersArray.length > 2 ? 'all' : 'both'} having ${best.type}
+        `;
+      } else return best;
+
+    } catch (e) {
+      console.log('error caught: hand type: ', best.type)
+      console.log('playerData: ', playerData.player.hand.map(card => [card.value, card.suit]))
+      console.log('ai1 Data: ', playerData.ai1.hand.map(card => [card.value, card.suit]))
+      console.log('ai2 Data: ', playerData.ai2.hand.map(card => [card.value, card.suit]))
+      console.log('ai3 Data: ', playerData.ai3.hand.map(card => [card.value, card.suit]))
+      console.log('tableCards: ', tableCards.map(card => [card.value, card.suit]));
+    }
   }
 
   return best;
@@ -496,11 +530,11 @@ const playerData = {
 
 var debug = true;
 
-playerData.player.hand = createHand([8, 2], ['h', 'd']); // pair Qs, kickers: 9, 7, 5 (table)
-playerData.ai1.hand = createHand([4, 2], ['d', 'c']);
-playerData.ai2.hand = createHand([8, 2], ['d', 'h']);
-playerData.ai3.hand = createHand([5, 2], ['h', 's']);
-let tableCards = createHand([3, 7, 9, 10, 13], ['d','c','s','h','d']);
+playerData.player.hand = createHand([11, 4], ['h', 'c']); // pair Qs, kickers: 9, 7, 5 (table)
+playerData.ai1.hand = createHand([12, 4], ['c', 's']);
+playerData.ai2.hand = createHand([9, 2], ['s', 'h']);
+playerData.ai3.hand = createHand([13, 7], ['c', 's']);
+let tableCards = createHand([7, 7, 9, 4, 13], ['d','h','c','d','h']);
 let testScoreObj = getWinner(playerData, tableCards);
 
 console.log('getWinner result: ', typeof testScoreObj === 'object' ? testScoreObj.owner : testScoreObj);
@@ -509,4 +543,4 @@ console.log('done')
 
 /* --- END DEBUG SCRIPTS --- */
 
-module.exports = { getScore, getScoreObject, ScoreCache, getWinner };
+export { getScore, getScoreObject, ScoreCache, getWinner };

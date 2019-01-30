@@ -1,36 +1,38 @@
 import React, { Component } from 'react';
-import { Deck, Card } from './util/deck.js';
-import Table from './components/Table.js';
-import PlayerDashboard from './components/PlayerDashboard';
-import AI from './components/AI';
+import styled from 'styled-components';
+
 import { InfoMessagesQueue } from './util/infoMessagesQueue';
-import InfoPanel from './components/InfoPanel';
 import { getWinner, getScore } from './util/engine.js';
+import { clonePlayerData, shouldHighlight, addToTableCards } from './util/helpers';
+import { deck } from './util/deck.js'; // this is the initialized deck instance
 
-const deck = new Deck();
+import PlayerDashboard from './components/PlayerDashboard';
+import Table from './components/Table.js';
+import AI from './components/AI';
+import InfoPanel from './components/InfoPanel';
 
-const addToTableCards = (oldTableCards, numNewCards) => {
-  return oldTableCards.concat(Array(numNewCards).fill(null).map(() => deck.dealCard()))
-}
+/* STYLED COMPONENTS */
 
-// helper function which clones a hand and all cards therein, applying an optional callback to each card
-const cloneHand = (hand, callback) => {
-  return hand.map(card => {
-    const newCard = new Card(card.value, card.suit);
-    if (card.highlight) newCard.highlight = true;
-    return callback ? callback(newCard) : newCard;
-  });
-}
+const StyledPoker = styled.div`
+  padding-top: 10px;
+  margin: 0 auto;
+  max-width: 1000px;
+  color: white;
+  display: grid;
+  width: 950px;
+  grid-template-columns: 20% 60% 20%;
+  grid-template-rows: 68px 130px 150px 200px;
+  grid-row-gap: 10px;
+  grid-template-areas: 
+    "infopanel infopanel infopanel"
+    ". ai2 ."
+    "ai1 table ai3"
+    "player player player";
+  background-color: rgb(0, 80, 0);
+  border-radius: 20px;
+`;
 
-// helper function which deep clones a playerData object
-const clonePlayerData = (oldPlayerData) => {
-  return Object.values(oldPlayerData).reduce((playerData, playerObj) => {
-    playerData[playerObj.id] = { ...playerObj, hand: cloneHand(playerObj.hand) };
-    return playerData;
-  }, {});
-
-}
-
+// todo: merge into playerData
 const fullNames = {
   ai1: "AI Opponent 1",
   ai2: "AI Opponent 2",
@@ -101,64 +103,50 @@ class Poker extends Component {
     if (gameStage === 4) {
       let winnerObj;
       const playerScoreObj = playerIsActive ? getScore(this.state.playerData.player.hand, this.state.tableCards, 'player') : null;
-      // todo: refactor when kicker cards no longer produce errors
-      try {
-        winnerObj = getWinner(this.state.playerData, this.state.tableCards);
+      // todo: refactor when getWinner returns objects on draws instead of strings
+      winnerObj = getWinner(this.state.playerData, this.state.tableCards);
+      if (typeof winnerObj === 'object') { 
         infoMessages.add(`Game over. ${fullNames[winnerObj.owner]} won with ${winnerObj.type}.`);
         if (winnerObj.owner !== 'player' && playerIsActive) {
           infoMessages.add(`You had ${playerScoreObj.type}.`);
         }
-      } catch(error) {
-        // stopgap: dummy winner obj
-        winnerObj = {
-          type: 'error',
-          score: 0,
-          cardsUsed: [],
-          highHandCards: [],
-          owner: 'player',
-        }
-        console.error('ERROR: Kicker card tiebreaker error.');
-        console.log('First score object:\n', error.dump.firstScoreObject);
-        console.log('Second score object:\n', error.dump.secondScoreObject);
-        infoMessages.add(
-          `***ERROR***: Computing a winner between ${error.dump.firstScoreObject.owner.toUpperCase()} and ${error.dump.secondScoreObject.owner.toUpperCase()}, both having ${error.dump.firstScoreObject.type.toUpperCase()}, required a tiebreaker using kicker cards. The game engine does not yet support this. See console for details.`
-        );
+        // highlight cards used in winning hand
+        const {newTableCards, newPlayerData} = this.getHighlightedWinnerCards(winnerObj.owner, winnerObj.cardsUsed);
+        this.setState({
+          playerData: newPlayerData,
+          tableCards: newTableCards,
+          displayAICards: true,
+          gameStage: gameStage + 1,
+          playerOptions: { Fold: false, Call: false, Deal: false, "New Game": true },
+          infoMessages,
+        });
+      } else { // hacky, just display "tiebreaker" text
+        infoMessages.add('Game over!', winnerObj);
+        this.setState({
+          displayAICards: true,
+          gameStage: gameStage + 1,
+          playerOptions: { Fold: false, Call: false, Deal: false, "New Game": true },
+          infoMessages,
+        })
       }
-      // highlight cards used in winning hand
-      const {newTableCards, newPlayerData} = this.getHighlightedWinnerCards(winnerObj.owner, winnerObj.cardsUsed);
-      this.setState({
-        playerData: newPlayerData,
-        tableCards: newTableCards,
-        displayAICards: true,
-        gameStage: gameStage + 1,
-        playerOptions: { Fold: false, Call: false, Deal: false, "New Game": true },
-        infoMessages,
-      });
     }
     if (!playerIsActive && gameStage < 4) setTimeout(this.deal, 1000);
   }
 
   getHighlightedWinnerCards = (winner, usedCards) => {
-    // create helper object of cards used for faster lookup
+    const { tableCards, playerData } = this.state;
+    // create helper object of cards used to pass to shouldHighlight
     const used = usedCards.reduce((acc, card) => {
       acc[card.displayName] = card;
       return acc;
     }, {});
 
-    const shouldHighlight = (card) => {
-      if (used[card.displayName]) {
-        const newCard = new Card(card.value, card.suit);
-        newCard.highlight = true;
-        return newCard;
-      } else return card;
-    }
-
-    const newTableCards = this.state.tableCards.map(card => shouldHighlight(card));
-    const newHandCards = cloneHand(this.state.playerData[winner].hand, shouldHighlight);
+    const newTableCards = tableCards.map(card => shouldHighlight(card, used));
+    const newHandCards = playerData[winner].hand.map(card => shouldHighlight(card, used));
 
     // dupe all playerData then replace only winner's
-    const newPlayerData = clonePlayerData(this.state.playerData);
-    newPlayerData[winner] = { ...newPlayerData[winner], hand: newHandCards };
+    const newPlayerData = clonePlayerData(playerData);
+    newPlayerData[winner].hand = newHandCards;
     return { newTableCards, newPlayerData };
 
   }
@@ -195,7 +183,7 @@ class Poker extends Component {
     }, this.deal);
   }
 
-  raise = (playerID) => {}
+  raise = (playerID) => { }
 
   call = (playerID) => {
     this.deal();
@@ -203,8 +191,9 @@ class Poker extends Component {
 
   render() {
     const { playerData, tableCards, displayAICards, playerOptions } = this.state;
+    console.log('playerData:', playerData)
     return (
-      <div id="Poker">
+      <StyledPoker>
         <InfoPanel
           messages={this.state.infoMessages}
         />
@@ -237,7 +226,7 @@ class Poker extends Component {
           }}
           options={playerOptions}
         />
-      </div>
+      </StyledPoker>
     );
   }
 }
