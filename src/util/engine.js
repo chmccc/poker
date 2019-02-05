@@ -450,15 +450,27 @@ const getWinner = (playerData, tableCards) => {
     );
   }
 
-  const fiveCardHands = new Set([8, 6, 5, 4]);
-  let kickerCardTie = false;
-  let tableWinning = false;
-  let tiesByKicker = {};
+  // output data schema
+  const output = {
+    error: false,
+    kickerCardTie: false,
+    potSplit: false,
+    winners: [],
+    notify: '',
+  };
 
   // for each active player, compare against the best score object so far in the array, updating as necessary
   let best = getScore(playerHandsArray[0].hand, tableCards, playerHandsArray[0].id);
 
-  if (playerHandsArray.length === 1) return best;
+  if (playerHandsArray.length === 1) {
+    output.winners.push(best);
+    return output;
+  }
+
+  const fiveCardHands = new Set([8, 6, 5, 4]);
+  let kickerCardTie = false;
+  let tableWinning = false;
+  let tiesByKicker = {};
 
   for (let index = 1; index < playerHandsArray.length; index++) {
     const currPlayerData = playerHandsArray[index];
@@ -547,9 +559,7 @@ const getWinner = (playerData, tableCards) => {
     // if (debug) console.log('best.owner: ', best.owner, 'best.type: ', best.type);
   }
 
-  const output = {};
-  output.error = false;
-  output.winners = [];
+  output.kickerCardTie = kickerCardTie;
 
   if (kickerCardTie) {
     let handKey, kickerKey;
@@ -581,10 +591,13 @@ const getWinner = (playerData, tableCards) => {
         output.notify = `Draw! Pot is split between ${ownerNamesArray.join(' and ')},
           ${ownerNamesArray.length > 2 ? 'all' : 'both'} having ${best.type}.
         `;
+        if (kickerKey === 'table') output.notify += ' All valid kicker cards were on the table';
         output.potSplit = true;
       } else {
+        output.notify = `Game over. Close one! ${best.owner} won with ${
+          best.type
+        } by kicker card(s).`;
         output.push(best);
-        output.potSplit = false;
       }
     } catch (e) {
       console.log('error caught: hand type: ', best.type);
@@ -599,7 +612,6 @@ const getWinner = (playerData, tableCards) => {
   } else {
     output.winners.push(best);
     output.notify = `Game over. ${best.owner} won with ${best.type}.`;
-    output.potSplit = false;
   }
 
   return output;
@@ -633,7 +645,7 @@ class Card {
     this.isAce = val === 14;
     this.displayName = `${cardNames[val]} of ${suit}`;
     this.short = getShort(val);
-    this.highlight = false;
+    this.highlightColor = false;
   }
 }
 
