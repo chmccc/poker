@@ -12,7 +12,6 @@ const StyledOptionsPanel = styled.div`
     height: 75%;
     grid-template-columns: 50% 50%;
   }
-  
 `;
 
 const StyledButton = styled.button`
@@ -22,14 +21,14 @@ const StyledButton = styled.button`
   border-radius: 4px;
   box-shadow: 0 4px 8px 0 #1c3814, 0 6px 20px 0 #1c3814;
   font-size: 1em;
-  font-family: "Contrail One";
+  font-family: 'Contrail One';
   -webkit-transition-duration: 0.4s;
   transition-duration: 0.4s;
-  color: ${props => props.disabled ? 'grey' : 'black'};
-  background-color: ${props => props.disabled ? 'lightgrey' : 'white'};
-  
+  color: ${props => (props.disabled ? 'grey' : 'black')};
+  background-color: ${props => (props.disabled ? 'lightgrey' : 'white')};
+
   :hover {
-    background-color: ${props => props.disabled ? 'lightgrey' : 'lightgreen'}
+    background-color: ${props => (props.disabled ? 'lightgrey' : 'lightgreen')};
   }
 `;
 
@@ -41,26 +40,30 @@ const OptionsPanel = ({ options, callbacks }) => {
         <StyledButton
           callback={`${options.Deal}`}
           onClick={() => callbacks.Deal('player')}
-          disabled={!options.Deal}
-        >Deal</StyledButton>
+          disabled={!options.Deal}>
+          Deal
+        </StyledButton>
         <StyledButton
-          callback={`${options["New Game"]}`}
-          onClick={() => callbacks["New Game"]('player')}
-          disabled={!options["New Game"]}
-        >New Game</StyledButton>
+          callback={`${options['New Game']}`}
+          onClick={() => callbacks['New Game']('player')}
+          disabled={!options['New Game']}>
+          New Game
+        </StyledButton>
         <StyledButton
           callback={`${options.Call}`}
           onClick={() => callbacks.Call('player')}
-          disabled={!options.Call}
-        >Call</StyledButton>
+          disabled={!options.Call}>
+          Call
+        </StyledButton>
         <StyledButton
           callback={`${options.Fold}`}
           onClick={() => callbacks.Fold('player')}
-          disabled={!options.Fold}
-        >Fold</StyledButton>
+          disabled={!options.Fold}>
+          Fold
+        </StyledButton>
       </div>
     </StyledOptionsPanel>
-  )
-}
+  );
+};
 
 export default OptionsPanel;

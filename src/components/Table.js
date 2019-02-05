@@ -1,21 +1,23 @@
 import React from 'react';
 import Card from './Card';
+import styled from 'styled-components';
 
-const Table = ({cards, fold}) => {
+const StyledTable = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  grid-area: table;
+  padding-left: 30px;
+`;
 
+const Table = ({ cards, fold }) => {
   return (
-    <div id="Table">
+    <StyledTable>
       {cards.map(card => (
-        <Card
-          key={`table${card.displayName}`}
-          width={80}
-          shown
-          card={card}
-          location="table"
-        />
+        <Card key={`table${card.displayName}`} width={80} shown card={card} />
       ))}
-    </div>
-  )
-}
+    </StyledTable>
+  );
+};
 
 export default Table;

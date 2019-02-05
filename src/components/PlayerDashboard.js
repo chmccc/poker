@@ -7,7 +7,7 @@ const StyledPlayerDashboard = styled.div`
   grid-area: player;
   display: grid;
   grid-template-columns: 25% 50% 25%;
-  grid-template-areas: "playerName playerCards playerOptions";
+  grid-template-areas: 'playerName playerCards playerOptions';
   #status-wrapper {
     font-family: Courgette;
     padding: 10px 20px;
@@ -22,16 +22,15 @@ const StyledPlayerDashboard = styled.div`
 `;
 
 const PlayerDashboard = ({ data, options, callbacks }) => {
-
   return (
     <StyledPlayerDashboard>
       <div id="status-wrapper">
-        <h4>{`Player${ data.active ? '' : ' (folded)'}`}</h4>
+        <h4>{`Player${data.active ? '' : ' (folded)'}`}</h4>
       </div>
       <PlayerHand hand={data.hand} />
       <OptionsPanel options={options} callbacks={callbacks} />
     </StyledPlayerDashboard>
-  )
-}
+  );
+};
 
 export default PlayerDashboard;

@@ -3,7 +3,7 @@ import { getWinner } from '../../util/engine.js';
 import { createHand } from '../../util/helpers';
 require('dotenv').config();
 
-const stressMultiplier = process.env.STRESS_TEST_MULTIPLIER; // determines loop size for stress tests
+const stressMultiplier = process.env.STRESS_TEST_MULT; // determines loop size for stress tests
 
 const deck = new Deck();
 
@@ -145,8 +145,7 @@ describe('kicker card tiebreaker tests', () => {
       playerData.ai3.hand = createHand([12, 3], ['h', 's']);
       let tableCards = createHand([13, 14, 14, 14, 14], ['d','c','s','h','d']);
       let testScoreObj = getWinner(playerData, tableCards);
-      // NO DRAW LOGIC YET
-      expect(testScoreObj).toEqual('table_win_placeholder');
+      expect(testScoreObj).toEqual(expect.stringContaining('Draw'));
     });
 
     test('should call a draw when 4 of a kind is on the table and 2 players had the same high kicker in the hole' , () => {
@@ -156,8 +155,7 @@ describe('kicker card tiebreaker tests', () => {
       playerData.ai3.hand = createHand([4, 3], ['h', 's']);
       let tableCards = createHand([3, 14, 14, 14, 14], ['d','c','s','h','d']);
       let testScoreObj = getWinner(playerData, tableCards);
-      // NO DRAW LOGIC YET
-      expect(testScoreObj).toEqual('true_draw_placeholder');
+      expect(testScoreObj).toEqual(expect.stringContaining('Draw'))
     });
 
   });
@@ -189,14 +187,14 @@ describe('kicker card tiebreaker tests', () => {
       playerData.ai3.hand = createHand([4, 3], ['h', 's']);
       let tableCards = createHand([12, 14, 14, 14, 13], ['d','c','s','h','d']);
       let testScoreObj = getWinner(playerData, tableCards);
-      expect(testScoreObj).toEqual('table_win_placeholder');
+      expect(testScoreObj).toEqual(expect.stringContaining('Draw'));
       playerData.player.hand = createHand([9, 4], ['h', 'c']); 
       playerData.ai1.hand = createHand([8, 2], ['h', 'c']);
       playerData.ai2.hand = createHand([11, 5], ['d', 'c']);
       playerData.ai3.hand = createHand([4, 3], ['h', 's']);
       tableCards = createHand([12, 14, 14, 14, 13], ['d','c','s','h','d']);
       testScoreObj = getWinner(playerData, tableCards);
-      expect(testScoreObj).toEqual('table_win_placeholder');
+      expect(testScoreObj).toEqual(expect.stringContaining('Draw'));
     });
 
     test('should call a draw when 2 players have the same three of a kind', () => {
@@ -206,14 +204,14 @@ describe('kicker card tiebreaker tests', () => {
       playerData.ai3.hand = createHand([4, 3], ['h', 's']); // a pair
       let tableCards = createHand([7, 14, 14, 5, 3], ['d','c','s','h','d']);
       let testScoreObj = getWinner(playerData, tableCards);
-      expect(testScoreObj).toEqual('true_draw_placeholder');
+      expect(testScoreObj).toEqual(expect.stringContaining('Draw'))
       playerData.player.hand = createHand([9, 2], ['h', 's']); // 3 oak, kicker 10
       playerData.ai1.hand = createHand([7, 8], ['d', 'c']);
       playerData.ai2.hand = createHand([9, 2], ['d', 'c']); // a pair
       playerData.ai3.hand = createHand([8, 3], ['h', 's']); // a pair
       tableCards = createHand([7, 2, 2, 5, 14], ['d','c','s','h','d']);
       testScoreObj = getWinner(playerData, tableCards);
-      expect(testScoreObj).toEqual('true_draw_placeholder');
+      expect(testScoreObj).toEqual(expect.stringContaining('Draw'))
     });
 
   });
@@ -238,8 +236,7 @@ describe('kicker card tiebreaker tests', () => {
       playerData.ai3.hand = createHand([4, 3], ['h', 's']);
       let tableCards = createHand([11, 13, 13, 14, 14], ['d','c','s','h','d']);
       let testScoreObj = getWinner(playerData, tableCards);
-      // NO DRAW LOGIC YET
-      expect(testScoreObj).toEqual('table_win_placeholder');
+      expect(testScoreObj).toEqual(expect.stringContaining('Draw'));
     });
 
     test('should call a draw when 2 pair is on the table and 2 players have the same high kicker in the hole' , () => {
@@ -249,8 +246,7 @@ describe('kicker card tiebreaker tests', () => {
       playerData.ai3.hand = createHand([9, 3], ['d', 's']);
       let tableCards = createHand([3, 13, 13, 7, 7], ['d','c','s','h','d']);
       let testScoreObj = getWinner(playerData, tableCards);
-      // NO DRAW LOGIC YET
-      expect(testScoreObj).toEqual('true_draw_placeholder');
+      expect(testScoreObj).toEqual(expect.stringContaining('Draw'))
     });
 
     test('should determine a winner by high kicker when 2 pair is on the table and a player has a low pair in the hole' , () => {
@@ -260,7 +256,6 @@ describe('kicker card tiebreaker tests', () => {
       playerData.ai3.hand = createHand([4, 3], ['h', 's']);
       let tableCards = createHand([10, 14, 14, 12, 12], ['d','c','s','h','d']);
       let testScoreObj = getWinner(playerData, tableCards);
-      // NO DRAW LOGIC YET
       expect(testScoreObj.owner).toEqual('ai1');
       expect(testScoreObj.score).toEqual(2);
       playerData.player.hand = createHand([9, 9], ['h', 'c']); 
@@ -269,7 +264,6 @@ describe('kicker card tiebreaker tests', () => {
       playerData.ai3.hand = createHand([12, 3], ['h', 's']); // queen high
       tableCards = createHand([10, 14, 14, 13, 13], ['d','c','s','h','d']);
       testScoreObj = getWinner(playerData, tableCards);
-      // NO DRAW LOGIC YET
       expect(testScoreObj.owner).toEqual('ai3');
       expect(testScoreObj.score).toEqual(2);
     });
@@ -281,7 +275,7 @@ describe('kicker card tiebreaker tests', () => {
       playerData.ai3.hand = createHand([4, 3], ['h', 's']); // pair of 4s should lose
       let tableCards = createHand([4, 13, 9, 5, 5], ['d','c','s','h','d']);
       let testScoreObj = getWinner(playerData, tableCards);
-      expect(testScoreObj).toEqual('table_win_placeholder');
+      expect(testScoreObj).toEqual(expect.stringContaining('Draw'));
 
       playerData.player.hand = createHand([9, 5], ['h', 'd']); // 2p 9s and 5s
       playerData.ai1.hand = createHand([9, 5], ['d', 'c']); // 2p 9s and 5s
@@ -289,7 +283,7 @@ describe('kicker card tiebreaker tests', () => {
       playerData.ai3.hand = createHand([4, 3], ['h', 's']); // 4 high
       tableCards = createHand([7, 13, 9, 5, 2], ['d','c','s','h','d']);
       testScoreObj = getWinner(playerData, tableCards);
-      expect(testScoreObj).toEqual('table_win_placeholder');
+      expect(testScoreObj).toEqual(expect.stringContaining('Draw'));
     });
 
     test('should call a draw when 2 players have the same 2 pair and the same high kicker', () => {
@@ -299,7 +293,7 @@ describe('kicker card tiebreaker tests', () => {
       playerData.ai3.hand = createHand([4, 3], ['h', 's']);
       let tableCards = createHand([4, 7, 9, 5, 5], ['d','c','s','h','d']);
       let testScoreObj = getWinner(playerData, tableCards);
-      expect(testScoreObj).toEqual('true_draw_placeholder');
+      expect(testScoreObj).toEqual(expect.stringContaining('Draw'))
     });
 
   });
@@ -324,7 +318,6 @@ describe('kicker card tiebreaker tests', () => {
       playerData.ai3.hand = createHand([9, 2], ['d', 's']); 
       let tableCards = createHand([3, 13, 13, 10, 7], ['d','c','s','h','d']);
       let testScoreObj = getWinner(playerData, tableCards);
-      // NO DRAW LOGIC YET
       expect(testScoreObj.owner).toEqual('player');
       expect(testScoreObj.score).toEqual(1);
     });
@@ -336,8 +329,7 @@ describe('kicker card tiebreaker tests', () => {
       playerData.ai3.hand = createHand([4, 3], ['h', 's']);
       let tableCards = createHand([10, 13, 13, 12, 11], ['d','c','s','h','d']);
       let testScoreObj = getWinner(playerData, tableCards);
-      // NO DRAW LOGIC YET
-      expect(testScoreObj).toEqual('table_win_placeholder');
+      expect(testScoreObj).toEqual(expect.stringContaining('Draw'));
     });
 
     test('should call a draw when a pair is on the table and 2 players have the same high kickers in the hole' , () => {
@@ -347,8 +339,7 @@ describe('kicker card tiebreaker tests', () => {
       playerData.ai3.hand = createHand([9, 2], ['d', 's']); // close but not the same as player & ai1
       let tableCards = createHand([3, 13, 13, 5, 7], ['d','c','s','h','d']);
       let testScoreObj = getWinner(playerData, tableCards);
-      // NO DRAW LOGIC YET
-      expect(testScoreObj).toEqual('true_draw_placeholder');
+      expect(testScoreObj).toEqual(expect.stringContaining('Draw'));
     });
 
     test('should determine a winner by high kicker when 2 players have the same pair' , () => {
@@ -358,7 +349,6 @@ describe('kicker card tiebreaker tests', () => {
       playerData.ai3.hand = createHand([9, 2], ['d', 's']); 
       let tableCards = createHand([3, 14, 13, 6, 4], ['d','c','s','h','d']);
       let testScoreObj = getWinner(playerData, tableCards);
-      // NO DRAW LOGIC YET
       expect(testScoreObj.owner).toEqual('player');
       expect(testScoreObj.score).toEqual(1);
     });
@@ -370,7 +360,7 @@ describe('kicker card tiebreaker tests', () => {
       playerData.ai3.hand = createHand([4, 3], ['h', 's']); // pair of 4s should lose
       let tableCards = createHand([9, 13, 11, 3, 7], ['d','c','s','h','d']);
       let testScoreObj = getWinner(playerData, tableCards);
-      expect(testScoreObj).toEqual('true_draw_placeholder');
+      expect(testScoreObj).toEqual(expect.stringContaining('Draw'))
 
       playerData.player.hand = createHand([7, 5], ['h', 'd']); 
       playerData.ai1.hand = createHand([10, 5], ['d', 'c']); // pair of 5s, kickers: 13(t), 11(t), 10(hole)
@@ -378,7 +368,7 @@ describe('kicker card tiebreaker tests', () => {
       playerData.ai3.hand = createHand([7, 3], ['h', 's']); 
       tableCards = createHand([11, 13, 9, 5, 2], ['d','c','s','h','d']);
       testScoreObj = getWinner(playerData, tableCards);
-      expect(testScoreObj).toEqual('true_draw_placeholder');
+      expect(testScoreObj).toEqual(expect.stringContaining('Draw'))
     });
 
     test('should call a draw when 2 players have the same pair and the same high kickers', () => {
@@ -388,7 +378,7 @@ describe('kicker card tiebreaker tests', () => {
       playerData.ai3.hand = createHand([4, 2], ['h', 's']);
       let tableCards = createHand([4, 7, 9, 5, 3], ['d','c','s','h','d']);
       let testScoreObj = getWinner(playerData, tableCards);
-      expect(testScoreObj).toEqual('table_win_placeholder');
+      expect(testScoreObj).toEqual(expect.stringContaining('Draw'));
 
       playerData.player.hand = createHand([12, 11], ['h', 'd']); // pair Qs, kickers: 11(h), 7, 5 (table)
       playerData.ai1.hand = createHand([12, 11], ['d', 'c']);
@@ -396,7 +386,7 @@ describe('kicker card tiebreaker tests', () => {
       playerData.ai3.hand = createHand([8, 14], ['h', 's']);
       tableCards = createHand([2, 7, 12, 5, 3], ['d','c','s','h','d']);
       testScoreObj = getWinner(playerData, tableCards);
-      expect(testScoreObj).toEqual('true_draw_placeholder');
+      expect(testScoreObj).toEqual(expect.stringContaining('Draw'))
     });
 
     
@@ -411,7 +401,7 @@ describe('kicker card tiebreaker tests', () => {
       playerData.ai3.hand = createHand([5, 2], ['h', 's']);
       let tableCards = createHand([6, 7, 9, 10, 11], ['d','c','s','h','d']);
       let testScoreObj = getWinner(playerData, tableCards);
-      expect(testScoreObj).toEqual('table_win_placeholder');
+      expect(testScoreObj).toEqual(expect.stringContaining('Draw'));
     });
 
     test('should call a draw when 2 players have the exact same kickers', () => {
@@ -421,7 +411,7 @@ describe('kicker card tiebreaker tests', () => {
       playerData.ai3.hand = createHand([5, 2], ['h', 's']);
       let tableCards = createHand([3, 7, 9, 10, 13], ['d','c','s','h','d']);
       let testScoreObj = getWinner(playerData, tableCards);
-      expect(testScoreObj).toEqual('true_draw_placeholder');
+      expect(testScoreObj).toEqual(expect.stringContaining('Draw'))
     });
 
     test('should return a winner when some players have some of the same kickers but not all', () => {
@@ -438,9 +428,9 @@ describe('kicker card tiebreaker tests', () => {
   });
 
   describe('ultimate stress test', () => {
-
+    console.log(stressMultiplier)
     // will not work until kicker logic is in place
-    xtest(`should always pick a winner (${stressMultiplier}x stress test)`, () => {
+    test(`should always pick a winner (${stressMultiplier}x stress test)`, () => {
       for (let i = 0; i < stressMultiplier; i++) {
         deck.reset();
         playerData.player.hand = [deck.dealCard(), deck.dealCard()];
@@ -448,14 +438,7 @@ describe('kicker card tiebreaker tests', () => {
         playerData.ai2.hand = [deck.dealCard(), deck.dealCard()];
         playerData.ai3.hand = [deck.dealCard(), deck.dealCard()];
         const tableCards = new Array(5).fill(null).map(e => deck.dealCard());
-        const stressScoreObject = getWinner(playerData, tableCards);
-        expect(stressScoreObject).toMatchObject({
-          type: expect.any(String),
-          score: expect.any(Number),
-          cardsUsed: expect.any(Array),
-          highHandCards: expect.any(Array),
-          owner: expect.any(String),
-        });
+        expect(() => getWinner(playerData, tableCards)).not.toThrow();
       }
     });
 

@@ -4,70 +4,18 @@
 
 @font-face {
   font-family: Pokerface;
-  src: url('./assets/fonts/Poker.woff') format("woff");
+  src: url('./assets/fonts/Poker.woff') format('woff');
 }
 
 body {
   width: 100%;
   display: flex;
   justify-content: center;
-  font-family: "Contrail One", cursive, sans-serif;
+  font-family: 'Contrail One', cursive, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-image: url('./assets/images/woodgrain-large.jpg');
   background-size: cover;
   padding-top: 30px;
   margin: 0 auto !important;
-}
-
-/* CARDS & CARD CONTAINERS */
-
-#Table {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  grid-area: table;
-  padding-left: 30px;
-}
-
-.playerBox {
-  margin: 0 auto;
-  width: 85%;
-  height: 120px;
-  border: 3px solid #411f18;
-  background-color: rgb(0, 61, 0);
-  border-radius: 5px;
-  padding: 3px;
-}
-
-.playerBox-top {
-  max-width: 180px;
-  height: auto;
-}
-
-.player-title {
-  margin: 0px auto;
-  text-align: center;
-  font-family: Courgette;
-}
-
-.ai-card-container {
-  display: flex;
-  width: 100%;
-  flex-direction: row;
-  margin: 0 auto;
-  justify-content: center;
-}
-
-/* PLAYER DASHBOARD */
-
-#PlayerHand {
-  margin: 0 auto;
-  border: 3px solid #411f18;
-  border-radius: 5px;
-  height: 93%;
-  display: flex;
-  justify-content: center;
-  min-width: 350px;
-  background-color: rgb(0, 61, 0);
 }

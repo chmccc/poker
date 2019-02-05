@@ -13,7 +13,7 @@ const StyledPlayerHand = styled.div`
   background-color: rgb(0, 61, 0);
 `;
 
-const PlayerHand = ({hand}) => {
+const PlayerHand = ({ hand }) => {
   return (
     <StyledPlayerHand>
       {hand.map(card => (
@@ -26,7 +26,7 @@ const PlayerHand = ({hand}) => {
         />
       ))}
     </StyledPlayerHand>
-  )
-}
+  );
+};
 
 export default PlayerHand;
