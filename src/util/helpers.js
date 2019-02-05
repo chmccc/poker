@@ -15,7 +15,7 @@ const createHand = (vals, suits) => {
 const cloneHand = (hand, callback) => {
   return hand.map(card => {
     const newCard = new Card(card.value, card.suit);
-    if (card.highlight) newCard.highlight = true;
+    newCard.highlightColor = card.highlightColor;
     return callback ? callback(hand) : newCard;
   });
 };
@@ -29,11 +29,11 @@ const clonePlayerData = oldPlayerData => {
 };
 
 // determines whether a card should be highlighted (returns a highlighted copy of card if so)
-// expects a set of used card names
-const shouldHighlight = (card, used) => {
+// expects a Set of used card names
+const highlightSelectCards = (card, used, color) => {
   if (used.has(card.displayName)) {
     const newCard = new Card(card.value, card.suit);
-    newCard.highlight = true;
+    newCard.highlightColor = color;
     return newCard;
   } else return card;
 };
@@ -47,4 +47,4 @@ const addToTableCards = (oldTableCards, numNewCards) => {
   );
 };
 
-export { createHand, cloneHand, clonePlayerData, shouldHighlight, addToTableCards };
+export { createHand, cloneHand, clonePlayerData, highlightSelectCards, addToTableCards };

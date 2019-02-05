@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 import { InfoMessagesQueue } from './util/infoMessagesQueue';
 import { getWinner, getScore } from './util/engine.js';
-import { clonePlayerData, shouldHighlight, addToTableCards } from './util/helpers';
+import { clonePlayerData, highlightSelectCards, addToTableCards } from './util/helpers';
 import { deck } from './util/deck.js'; // this is the initialized deck instance
 
 import PlayerDashboard from './components/PlayerDashboard';
@@ -124,16 +124,19 @@ class Poker extends Component {
       let tableCards = this.state.tableCards;
       gameResult = getWinner(this.state.playerData, this.state.tableCards);
       infoMessages.add(gameResult.notify);
+
       // watch for error
       if (!gameResult.error) {
         console.log('gameResult: ', gameResult);
         if (gameResult.winners.length < 1) throw new Error('No winners in gameResult!');
+
         // highlight winning cards
         const highlights = this.getHighlightedWinningCards(gameResult);
         playerData = highlights.playerData;
         tableCards = highlights.tableCards;
         // todo: pot splitting and such
       }
+
       this.setState({
         playerData,
         tableCards,
@@ -147,22 +150,36 @@ class Poker extends Component {
   };
 
   getHighlightedWinningCards = gameResult => {
-    // create helper object of cards used to pass to shouldHighlight
+    // create helper objects of cards used to pass to highlightSelectCards
     const usedCards = new Set();
+    const usedKickers = new Set();
     gameResult.winners.forEach(scoreObj => {
       scoreObj.cardsUsed.forEach(card => {
         usedCards.add(card.displayName);
       });
+      if (gameResult.kickerCardTie) {
+        scoreObj.validKickers.forEach(card => {
+          usedKickers.add(card.displayName);
+        });
+      }
     });
 
-    const tableCards = this.state.tableCards.map(card => shouldHighlight(card, usedCards));
+    const tableCards = this.state.tableCards.map(card =>
+      highlightSelectCards(card, usedCards, 'skyblue')
+    );
 
     // clone all player data, then run through each winner's hand and highlight cards used
     const playerData = clonePlayerData(this.state.playerData);
     gameResult.winners.forEach(scoreObj => {
+      // one loop for hand cards
       playerData[scoreObj.owner].hand = playerData[scoreObj.owner].hand.map(card =>
-        shouldHighlight(card, usedCards)
+        highlightSelectCards(card, usedCards, 'skyblue')
       );
+      // and one for kickers
+      if (gameResult.kickerCardTie)
+        playerData[scoreObj.owner].hand = playerData[scoreObj.owner].hand.map(card =>
+          highlightSelectCards(card, usedKickers, 'khaki')
+        );
     });
     return { tableCards, playerData };
   };

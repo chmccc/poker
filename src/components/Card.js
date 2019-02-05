@@ -7,7 +7,7 @@ const StyledCard = styled.div`
   width: ${props => props.width}px;
   color: ${props => props.card.color};
   height: ${props => props.width * 1.4}px;
-  background-color: ${props => (props.card.highlight ? 'skyblue' : 'white')};
+  background-color: ${props => props.card.highlightColor};
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
