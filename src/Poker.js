@@ -2,14 +2,27 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 
 import { InfoMessagesQueue } from './util/infoMessagesQueue';
-import { getWinner, getScore } from './util/engine.js';
-import { clonePlayerData, highlightSelectCards, addToTableCards } from './util/helpers';
+import { getWinner } from './util/engine.js';
+import { clonePlayerData, highlightSelectCards, addToTableCards, createHand } from './util/helpers';
 import { deck } from './util/deck.js'; // this is the initialized deck instance
 
 import PlayerDashboard from './components/PlayerDashboard';
 import Table from './components/Table.js';
 import AI from './components/AI';
 import InfoPanel from './components/InfoPanel';
+
+/* DEBUG STUFF */
+
+// used to override hole cards
+const debugHolePlayerData = newPlayerData => {
+  newPlayerData.player.hand = createHand([11, 9], ['h', 'h']);
+  newPlayerData.ai1.hand = createHand([9, 2], ['s', 's']);
+  newPlayerData.ai2.hand = createHand([14, 12], ['c', 'd']);
+  newPlayerData.ai3.hand = createHand([7, 6], ['s', 'h']);
+};
+
+// used to override table cards (pre-scoring)
+const debugTableCards = () => createHand([10, 9, 10, 4, 11], ['d', 'c', 'c', 'd', 's']);
 
 /* STYLED COMPONENTS */
 
@@ -56,6 +69,7 @@ class Poker extends Component {
       gameStage: 0,
       playerIsActive: true,
       infoMessages: new InfoMessagesQueue(),
+      debug: false,
     };
   }
 
@@ -67,9 +81,17 @@ class Poker extends Component {
       // deal players cards
       infoMessages.add('Hole cards dealt.');
       const newPlayerData = clonePlayerData(this.state.playerData);
-      Object.values(newPlayerData).forEach(playerObj => {
-        playerObj.hand = [deck.dealCard(), deck.dealCard()];
-      });
+
+      // DEBUG STUFF
+      if (this.state.debug) {
+        infoMessages.add('<<DEBUG MODE: Hole cards overridden. >>');
+        debugHolePlayerData(newPlayerData);
+      } else {
+        Object.values(newPlayerData).forEach(playerObj => {
+          playerObj.hand = [deck.dealCard(), deck.dealCard()];
+        });
+      }
+
       this.setState({
         playerData: newPlayerData,
         playerOptions: {
@@ -103,7 +125,14 @@ class Poker extends Component {
     if (gameStage === 2 || gameStage === 3) {
       // deal the turn/river
       infoMessages.add(gameStage === 2 ? 'Turn dealt.' : 'River dealt.');
-      const newTableCards = addToTableCards(this.state.tableCards, 1);
+      let newTableCards = addToTableCards(this.state.tableCards, 1);
+
+      // DEBUG RIVER OVERRIDE:
+      if (gameStage === 3 && this.state.debug) {
+        infoMessages.add('<< DEBUG MODE: River overridden. >>');
+        newTableCards = debugTableCards();
+      }
+
       this.setState({
         tableCards: newTableCards,
         playerOptions: {
@@ -157,7 +186,7 @@ class Poker extends Component {
       scoreObj.cardsUsed.forEach(card => {
         usedCards.add(card.displayName);
       });
-      if (gameResult.kickerCardTie) {
+      if (scoreObj.validKickers && scoreObj.validKickers.length) {
         scoreObj.validKickers.forEach(card => {
           usedKickers.add(card.displayName);
         });
@@ -176,7 +205,7 @@ class Poker extends Component {
         highlightSelectCards(card, usedCards, 'skyblue')
       );
       // and one for kickers
-      if (gameResult.kickerCardTie)
+      if (scoreObj.validKickers && scoreObj.validKickers.length)
         playerData[scoreObj.owner].hand = playerData[scoreObj.owner].hand.map(card =>
           highlightSelectCards(card, usedKickers, 'khaki')
         );
@@ -228,38 +257,46 @@ class Poker extends Component {
   render() {
     const { playerData, tableCards, displayAICards, playerOptions } = this.state;
     return (
-      <StyledPoker>
-        <InfoPanel messages={this.state.infoMessages} />
-        <AI
-          data={playerData.ai1}
-          tableCards={tableCards}
-          key={playerData.ai1.id}
-          showCards={displayAICards}
-        />
-        <AI
-          data={playerData.ai2}
-          tableCards={tableCards}
-          key={playerData.ai2}
-          showCards={displayAICards}
-        />
-        <AI
-          data={playerData.ai3}
-          tableCards={tableCards}
-          key={playerData.ai3.id}
-          showCards={displayAICards}
-        />
-        <Table cards={tableCards} />
-        <PlayerDashboard
-          data={playerData.player}
-          callbacks={{
-            Fold: this.fold,
-            Call: this.call,
-            Deal: this.deal,
-            'New Game': this.newGame,
-          }}
-          options={playerOptions}
-        />
-      </StyledPoker>
+      <React.Fragment>
+        <StyledPoker>
+          <InfoPanel messages={this.state.infoMessages} />
+          <AI
+            data={playerData.ai1}
+            tableCards={tableCards}
+            key={playerData.ai1.id}
+            showCards={displayAICards}
+          />
+          <AI
+            data={playerData.ai2}
+            tableCards={tableCards}
+            key={playerData.ai2}
+            showCards={displayAICards}
+          />
+          <AI
+            data={playerData.ai3}
+            tableCards={tableCards}
+            key={playerData.ai3.id}
+            showCards={displayAICards}
+          />
+          <Table cards={tableCards} />
+          <PlayerDashboard
+            data={playerData.player}
+            callbacks={{
+              Fold: this.fold,
+              Call: this.call,
+              Deal: this.deal,
+              'New Game': this.newGame,
+            }}
+            options={playerOptions}
+          />
+        </StyledPoker>
+        <button
+          onClick={() => {
+            let { debug } = this.state;
+            debug = !debug;
+            this.setState({ debug });
+          }}>{`Debug Mode (${this.state.debug ? 'ON' : 'OFF'})`}</button>
+      </React.Fragment>
     );
   }
 }
