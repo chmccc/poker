@@ -130,8 +130,7 @@ describe('kicker card tiebreaker tests', () => {
   });
 
   describe('four of a kind tiebreaker tests', () => {
-    // todo: this one is part of the 4OaK-2pair-1pair on table bug
-    xtest('should determine a winner by kicker when 4 of a kind is on the table', () => {
+    test('should determine a winner by kicker when 4 of a kind is on the table', () => {
       playerData.player.hand = createHand([10, 9], ['h', 'c']); // beats table
       playerData.ai1.hand = createHand([6, 11], ['h', 'c']); // loses to player
       playerData.ai2.hand = createHand([11, 5], ['d', 'c']); // beats player

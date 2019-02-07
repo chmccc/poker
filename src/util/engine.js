@@ -591,16 +591,17 @@ const getWinner = (playerData, tableCards) => {
         output.notify = `Draw! Pot is split between ${ownerNamesArray.join(' and ')},
           ${ownerNamesArray.length > 2 ? 'all' : 'both'} having ${best.type}.
         `;
-        if (kickerKey === 'table') output.notify += ' All valid kicker cards were on the table';
+        if (kickerKey === 'table') output.notify += ' All valid kicker cards were on the table.';
         output.potSplit = true;
       } else {
         output.notify = `Game over. Close one! ${best.owner} won with ${
           best.type
         } by kicker card(s).`;
-        output.push(best);
+        output.winners.push(best);
       }
     } catch (e) {
       console.log('error caught: hand type: ', best.type);
+      console.log('error info: ', e.message);
       console.log('playerData: ', playerData.player.hand.map(card => [card.value, card.suit]));
       console.log('ai1 Data: ', playerData.ai1.hand.map(card => [card.value, card.suit]));
       console.log('ai2 Data: ', playerData.ai2.hand.map(card => [card.value, card.suit]));
@@ -611,37 +612,57 @@ const getWinner = (playerData, tableCards) => {
     }
   } else {
     output.winners.push(best);
-    output.notify = `Game over. ${best.owner} won with ${best.type}.`;
+    output.notify = `Game over. ${best.owner} won with ${best.type}${
+      best.validKickers && best.validKickers.length
+        ? `, using the ${best.validKickers[0].displayName} as the kicker card`
+        : ''
+    }.`;
   }
 
   return output;
 };
 
-/* --- DEBUG SCRIPTS --- 
+/* --- DEBUG SCRIPTS ---
 
 const suitEmojis = {
-  'Clubs': '♣️',
-  'Hearts': '♥️',
-  'Diamonds': '♦️',
-  'Spades': '♠️',
-}
+  Clubs: '♣️',
+  Hearts: '♥️',
+  Diamonds: '♦️',
+  Spades: '♠️',
+};
 
-const cardNames = ['', 'Ace', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Jack', 'Queen', 'King', 'Ace'];
+const cardNames = [
+  '',
+  'Ace',
+  'Two',
+  'Three',
+  'Four',
+  'Five',
+  'Six',
+  'Seven',
+  'Eight',
+  'Nine',
+  'Ten',
+  'Jack',
+  'Queen',
+  'King',
+  'Ace',
+];
 
-const getShort = (val) => {
+const getShort = val => {
   if (val === 1 || val === 14) return 'A';
   if (val === 13) return 'K';
   if (val === 12) return 'Q';
   if (val === 11) return 'J';
   return val.toString();
-}
+};
 
 class Card {
   constructor(val, suit) {
     this.value = val === 1 ? 14 : val;
     this.suit = suit;
     this.suitEmoji = suitEmojis[suit];
-    this.color = (suit === 'Hearts' || suit === 'Diamonds') ? 'red' : 'black';
+    this.color = suit === 'Hearts' || suit === 'Diamonds' ? 'red' : 'black';
     this.isAce = val === 14;
     this.displayName = `${cardNames[val]} of ${suit}`;
     this.short = getShort(val);
@@ -650,14 +671,14 @@ class Card {
 }
 
 const createHand = (vals, suits) => {
-  suits.forEach((char, i) => suits[i] = char.toUpperCase());
+  suits.forEach((char, i) => (suits[i] = char.toUpperCase()));
   const suitNames = { S: 'Spades', D: 'Diamonds', C: 'Clubs', H: 'Hearts' };
   const output = [];
   for (let i = 0; i < vals.length; i += 1) {
     output.push(new Card(vals[i], suitNames[suits[i]]));
   }
   return output;
-}
+};
 
 const playerData = {
   player: { id: 'player', active: true, hand: [] },
@@ -668,16 +689,16 @@ const playerData = {
 
 var debug = true;
 
-playerData.player.hand = createHand([11, 4], ['h', 'c']); // pair Qs, kickers: 9, 7, 5 (table)
-playerData.ai1.hand = createHand([12, 4], ['c', 's']);
-playerData.ai2.hand = createHand([9, 2], ['s', 'h']);
-playerData.ai3.hand = createHand([13, 7], ['c', 's']);
-let tableCards = createHand([7, 7, 9, 4, 13], ['d','h','c','d','h']);
+playerData.player.hand = createHand([11, 9], ['h', 'h']); // pair Qs, kickers: 9, 7, 5 (table)
+playerData.ai1.hand = createHand([9, 2], ['s', 's']);
+playerData.ai2.hand = createHand([14, 12], ['c', 'd']);
+playerData.ai3.hand = createHand([7, 6], ['s', 'h']);
+let tableCards = createHand([10, 9, 10, 4, 11], ['d', 'c', 'c', 'd', 's']);
 let testScoreObj = getWinner(playerData, tableCards);
 
-console.log('getWinner result: ', typeof testScoreObj === 'object' ? testScoreObj.owner : testScoreObj);
+console.log('getWinner result: ', testScoreObj);
 
-console.log('done')
+console.log('done');
 
 /* --- END DEBUG SCRIPTS --- */
 
