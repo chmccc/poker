@@ -56,6 +56,7 @@ const createBasePlayerData = () => {
   return {
     player: {
       id: 'player',
+      fullName: 'Player',
       active: true,
       hand: [],
       balance: 100,
@@ -64,6 +65,7 @@ const createBasePlayerData = () => {
     },
     ai1: {
       id: 'ai1',
+      fullName: 'AI Opponent 1',
       active: true,
       hand: [],
       balance: 100,
@@ -72,6 +74,7 @@ const createBasePlayerData = () => {
     },
     ai2: {
       id: 'ai2',
+      fullName: 'AI Opponent 2',
       active: true,
       hand: [],
       balance: 100,
@@ -80,6 +83,7 @@ const createBasePlayerData = () => {
     },
     ai3: {
       id: 'ai3',
+      fullName: 'AI Opponent 3',
       active: true,
       hand: [],
       balance: 100,
