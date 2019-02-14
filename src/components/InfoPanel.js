@@ -3,6 +3,7 @@ import styled from 'styled-components';
 
 const StyledInfoPanel = styled.div`
   width: 100%;
+  height: 100%;
   grid-area: infopanel;
   display: flex;
   flex-direction: column;
@@ -26,8 +27,8 @@ const InfoPanel = ({ messages }) => {
       ref={el => {
         div = el;
       }}>
-      {messages.toArray().map(str => (
-        <p key={`infomsg${str.slice(0, 40)}`}>{str}</p>
+      {messages.toArray().map((str, i) => (
+        <p key={`${str.slice(0, 20)}_${i}`}>{str}</p>
       ))}
     </StyledInfoPanel>
   );
