@@ -4,10 +4,11 @@ import styled from 'styled-components';
 
 const StyledTable = styled.div`
   display: flex;
+  width: 100%;
   justify-content: flex-start;
   align-items: center;
   grid-area: table;
-  padding-left: 30px;
+  padding-left: 0px;
 `;
 
 const Table = ({ cards, fold }) => {

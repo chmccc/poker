@@ -6,7 +6,7 @@ const StyledPlayerHand = styled.div`
   margin: 0 auto;
   border: 3px solid #411f18;
   border-radius: 5px;
-  height: 93%;
+  height: 97%;
   display: flex;
   justify-content: center;
   min-width: 350px;
@@ -17,13 +17,7 @@ const PlayerHand = ({ hand }) => {
   return (
     <StyledPlayerHand>
       {hand.map(card => (
-        <Card
-          key={`player${card.displayName}`}
-          width={120}
-          shown
-          card={card}
-          location="player"
-        />
+        <Card key={`player${card.displayName}`} width={125} shown card={card} location="player" />
       ))}
     </StyledPlayerHand>
   );
