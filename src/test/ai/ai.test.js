@@ -35,6 +35,17 @@ describe('prototype version tests for getNextMove', () => {
     expect(results).toEqual(expect.arrayContaining(required));
   });
 
+  test('it always meets the minimum to call when calling or raising (100x)', () => {
+    dummyPlayerData.ai1.currentBet = 10;
+    dummyPlayerData.ai1.balance = 100;
+    for (let i = 0; i < 100; i++) {
+      const choiceObj = getDecision(dummyPlayerData, 'ai1');
+      if (choiceObj.choice !== 'fold') {
+        expect(choiceObj.total).toBeGreaterThanOrEqual(20);
+      }
+    }
+  });
+
   test('when raising, it includes an amount divisible by 10 and never more than 200 (500x)', () => {
     dummyPlayerData.ai1.currentBet = 0;
     dummyPlayerData.ai1.balance = 1000;

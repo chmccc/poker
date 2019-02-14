@@ -8,10 +8,9 @@
  */
 
 const getDecision = (playerData, player) => {
-  const choiceObject = { choice: '', raise: 0 };
+  const choiceObject = { choice: '', raise: 0, total: 0 };
   const { currentBet } = playerData[player];
-  let { balance: bettingBalance } = playerData[player];
-  if (bettingBalance > 100) bettingBalance = 200; // never more than 200
+  let { balance } = playerData[player];
   // can the player call?
   const requiredToCall =
     Math.max(
@@ -19,16 +18,25 @@ const getDecision = (playerData, player) => {
         .filter(p => p.active)
         .map(p => p.currentBet) // makes an array of all current bets from active players
     ) - currentBet;
-  if (bettingBalance < requiredToCall) choiceObject.choice = 'fold';
+  if (balance < requiredToCall) choiceObject.choice = 'fold';
   else {
+    let bettingBalance = balance - requiredToCall;
+    if (bettingBalance > 200) bettingBalance = 200; // never more than 200
     const randInt = Math.random();
     if (randInt < 0.1) choiceObject.choice = 'fold';
-    else if (randInt < 0.3 && bettingBalance - requiredToCall >= 10) {
+    else if (randInt < 0.3 && bettingBalance >= 10) {
       choiceObject.choice = 'raise';
       choiceObject.raise = Math.ceil(Math.random() * ((bettingBalance - requiredToCall) / 10)) * 10;
-      if (choiceObject.raise > 10)
+      if (choiceObject.raise > 50 && Math.random() < 0.8) {
+        // divide large bets by 2 most of the time
         choiceObject.raise = Math.round(choiceObject.raise / 10 / 2) * 10;
-    } else choiceObject.choice = 'call';
+      }
+      // add the raise to the required call for the total bet
+      choiceObject.total += requiredToCall + choiceObject.raise;
+    } else {
+      choiceObject.choice = 'call';
+      choiceObject.total = requiredToCall;
+    }
   }
   return choiceObject;
 };
