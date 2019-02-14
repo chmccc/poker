@@ -22,6 +22,7 @@
 ### AI strategy
 
 - when to fold
+- how much to bet/whether to call
 - when to call
 - when to raise
 
@@ -33,6 +34,8 @@
 - should show a "next stage" button initially ✔️
 - should highlight cards used in winning hand once round is over ✔️
 - show controls at the bottom right ✔️
+- show balance for all players ✔️
+- show pot total ✔️
 
 ### Folding
 
@@ -40,7 +43,7 @@
 - game should continue until final stage until player folds ✔️
 - players who've folded should have their cards "greyed out"
 
-
 ### Message window
+
 - should report the winner of a hand ✔️
-- should report when a hand was won by a high card ✔️
+- should report when a hand was won by a high card
