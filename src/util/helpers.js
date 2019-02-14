@@ -23,7 +23,11 @@ const cloneHand = (hand, callback) => {
 // helper function which deep clones a playerData object
 const clonePlayerData = oldPlayerData => {
   return Object.values(oldPlayerData).reduce((playerData, playerObj) => {
-    playerData[playerObj.id] = { ...playerObj, hand: cloneHand(playerObj.hand) };
+    playerData[playerObj.id] = {
+      ...playerObj,
+      hand: cloneHand(playerObj.hand),
+      options: { ...playerObj.options },
+    };
     return playerData;
   }, {});
 };
@@ -47,4 +51,49 @@ const addToTableCards = (oldTableCards, numNewCards) => {
   );
 };
 
-export { createHand, cloneHand, clonePlayerData, highlightSelectCards, addToTableCards };
+// returns a basic playerData object
+const createBasePlayerData = () => {
+  return {
+    player: {
+      id: 'player',
+      active: true,
+      hand: [],
+      balance: 100,
+      currentBet: 0,
+      options: { Fold: false, Call: false, Deal: true, 'New Game': false, Raise: false },
+    },
+    ai1: {
+      id: 'ai1',
+      active: true,
+      hand: [],
+      balance: 100,
+      currentBet: 0,
+      options: { Fold: false, Call: false, Raise: false },
+    },
+    ai2: {
+      id: 'ai2',
+      active: true,
+      hand: [],
+      balance: 100,
+      currentBet: 0,
+      options: { Fold: false, Call: false, Raise: false },
+    },
+    ai3: {
+      id: 'ai3',
+      active: true,
+      hand: [],
+      balance: 100,
+      currentBet: 0,
+      options: { Fold: false, Call: false, Raise: false },
+    },
+  };
+};
+
+export {
+  createHand,
+  cloneHand,
+  clonePlayerData,
+  highlightSelectCards,
+  addToTableCards,
+  createBasePlayerData,
+};
