@@ -9,7 +9,8 @@ const StyledOptionsPanel = styled.div`
     display: grid;
     justify-items: center;
     align-items: center;
-    height: 75%;
+    height: 150px;
+    margin-top: 10px;
     grid-template-columns: 50% 50%;
   }
 `;
@@ -32,38 +33,63 @@ const StyledButton = styled.button`
   }
 `;
 
-const OptionsPanel = ({ options, callbacks }) => {
-  return (
-    <StyledOptionsPanel>
-      <h4>Options</h4>
-      <div id="PlayerOptions">
-        <StyledButton
-          callback={`${options.Deal}`}
-          onClick={() => callbacks.Deal('player')}
-          disabled={!options.Deal}>
-          Deal
-        </StyledButton>
-        <StyledButton
-          callback={`${options['New Game']}`}
-          onClick={() => callbacks['New Game']('player')}
-          disabled={!options['New Game']}>
-          New Game
-        </StyledButton>
-        <StyledButton
-          callback={`${options.Call}`}
-          onClick={() => callbacks.Call('player')}
-          disabled={!options.Call}>
-          Call
-        </StyledButton>
-        <StyledButton
-          callback={`${options.Fold}`}
-          onClick={() => callbacks.Fold('player')}
-          disabled={!options.Fold}>
-          Fold
-        </StyledButton>
-      </div>
-    </StyledOptionsPanel>
-  );
-};
+const StyledInput = styled.input`
+  height: 25px;
+  width: 80%;
+  border-radius: 4px;
+  box-shadow: 0 4px 8px 0 #1c3814, 0 6px 20px 0 #1c3814;
+  font-size: 1em;
+  font-family: 'Contrail One';
+  outline: none;
+`;
+
+class OptionsPanel extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      bet: 0,
+    };
+  }
+
+  onInputChange = e => {
+    let bet = e.target.value;
+    // validate input
+    if (e.target.value === '') bet = 0;
+    else if (/[^0-9]/g.test(bet)) bet = this.state.bet;
+    else bet = parseInt(bet, 10);
+    this.setState({ bet });
+  };
+
+  render() {
+    const { options, callbacks } = this.props;
+    return (
+      <StyledOptionsPanel>
+        <h4>Options</h4>
+        <div id="PlayerOptions">
+          <StyledButton onClick={() => callbacks.Deal('player')} disabled={!options.Deal}>
+            Deal
+          </StyledButton>
+          <StyledButton
+            onClick={() => callbacks['New Game']('player')}
+            disabled={!options['New Game']}>
+            New Game
+          </StyledButton>
+          <StyledButton onClick={() => callbacks.Call('player')} disabled={!options.Call}>
+            Call
+          </StyledButton>
+          <StyledButton onClick={() => callbacks.Fold('player')} disabled={!options.Fold}>
+            Fold
+          </StyledButton>
+          <StyledButton
+            onClick={() => callbacks.Raise('player', this.state.bet)}
+            disabled={!options.Raise}>
+            Bet/Raise:
+          </StyledButton>
+          <StyledInput onChange={this.onInputChange} value={this.state.bet} />
+        </div>
+      </StyledOptionsPanel>
+    );
+  }
+}
 
 export default OptionsPanel;
