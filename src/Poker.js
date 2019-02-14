@@ -3,13 +3,20 @@ import styled from 'styled-components';
 
 import { InfoMessagesQueue } from './util/infoMessagesQueue';
 import { getWinner } from './util/engine.js';
-import { clonePlayerData, highlightSelectCards, addToTableCards, createHand } from './util/helpers';
+import {
+  clonePlayerData,
+  highlightSelectCards,
+  addToTableCards,
+  createHand,
+  createBasePlayerData,
+} from './util/helpers';
 import { deck } from './util/deck.js'; // this is the initialized deck instance
 
 import PlayerDashboard from './components/PlayerDashboard';
 import Table from './components/Table.js';
 import AI from './components/AI';
 import InfoPanel from './components/InfoPanel';
+import Balance from './components/Balance';
 
 /* DEBUG STUFF */
 
@@ -29,18 +36,18 @@ const debugTableCards = () => createHand([10, 9, 10, 4, 11], ['d', 'c', 'c', 'd'
 const StyledPoker = styled.div`
   padding-top: 10px;
   margin: 0 auto;
-  max-width: 1000px;
   color: white;
   display: grid;
-  width: 950px;
-  grid-template-columns: 20% 60% 20%;
-  grid-template-rows: 68px 130px 150px 200px;
+  width: 920px;
+  grid-template-columns: 190px 330px 180px 190px;
+  grid-template-rows: 70px 150px 130px 220px;
   grid-row-gap: 10px;
+  grid-column-gap: 10px;
   grid-template-areas:
-    'infopanel infopanel infopanel'
-    '. ai2 .'
-    'ai1 table ai3'
-    'player player player';
+    'infopanel infopanel infopanel infopanel'
+    'ai1 ai2 pot ai3'
+    'ai1 table table ai3'
+    'player player player player';
   background-color: rgb(0, 80, 0);
   border-radius: 20px;
 `;
@@ -57,21 +64,28 @@ class Poker extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      playerData: {
-        player: { id: 'player', active: true, hand: [] },
-        ai1: { id: 'ai1', active: true, hand: [] },
-        ai2: { id: 'ai2', active: true, hand: [] },
-        ai3: { id: 'ai3', active: true, hand: [] },
-      },
+      playerData: createBasePlayerData(),
       tableCards: [],
-      playerOptions: { Fold: false, Call: false, Deal: true, 'New Game': false },
       displayAICards: false,
       gameStage: 0,
       playerIsActive: true,
       infoMessages: new InfoMessagesQueue(),
       debug: false,
+      potAmt: 0,
+      currentPlayerID: 'player',
+      fullRotation: false,
+      highBet: 0,
     };
   }
+
+  /** Returns a string for the next active player in the turn order */
+  getNextPlayer = currentPlayerID => {
+    // todo: refac to linked list?
+    const playerOrder = ['player', 'ai1', 'ai2', 'ai3', 'player', 'ai1', 'ai2', 'ai3'];
+    let index = playerOrder.indexOf(currentPlayerID);
+    while (!this.state.playerData[playerOrder[++index]].active) {}
+    return playerOrder[index];
+  };
 
   deal = () => {
     const { gameStage, playerIsActive } = this.state;
@@ -91,15 +105,15 @@ class Poker extends Component {
           playerObj.hand = [deck.dealCard(), deck.dealCard()];
         });
       }
-
+      newPlayerData.player.options = {
+        Deal: false,
+        Fold: playerIsActive,
+        Call: playerIsActive,
+        'New Game': false,
+        Raise: playerIsActive,
+      };
       this.setState({
         playerData: newPlayerData,
-        playerOptions: {
-          Deal: false,
-          Fold: playerIsActive,
-          Call: playerIsActive,
-          'New Game': false,
-        },
         gameStage: gameStage + 1,
         infoMessages,
       });
@@ -109,14 +123,17 @@ class Poker extends Component {
       // deal the flop
       infoMessages.add('Flop dealt.');
       const newTableCards = addToTableCards(this.state.tableCards, 3);
+      const newPlayerData = clonePlayerData(this.state.playerData);
+      newPlayerData.player.options = {
+        Deal: false,
+        Fold: playerIsActive,
+        Call: playerIsActive,
+        'New Game': false,
+        Raise: playerIsActive,
+      };
       this.setState({
+        playerData: newPlayerData,
         tableCards: newTableCards,
-        playerOptions: {
-          Deal: false,
-          Fold: playerIsActive,
-          Call: playerIsActive,
-          'New Game': false,
-        },
         gameStage: gameStage + 1,
         infoMessages,
       });
@@ -126,21 +143,24 @@ class Poker extends Component {
       // deal the turn/river
       infoMessages.add(gameStage === 2 ? 'Turn dealt.' : 'River dealt.');
       let newTableCards = addToTableCards(this.state.tableCards, 1);
-
+      const newPlayerData = clonePlayerData(this.state.playerData);
       // DEBUG RIVER OVERRIDE:
       if (gameStage === 3 && this.state.debug) {
         infoMessages.add('<< DEBUG MODE: River overridden. >>');
         newTableCards = debugTableCards();
       }
 
+      newPlayerData.player.options = {
+        Deal: false,
+        Fold: playerIsActive,
+        Call: playerIsActive,
+        'New Game': false,
+        Raise: playerIsActive,
+      };
+
       this.setState({
+        playerData: newPlayerData,
         tableCards: newTableCards,
-        playerOptions: {
-          Deal: false,
-          Fold: playerIsActive,
-          Call: playerIsActive,
-          'New Game': false,
-        },
         gameStage: gameStage + 1,
         infoMessages,
       });
@@ -149,29 +169,36 @@ class Poker extends Component {
     if (gameStage === 4) {
       let gameResult;
       let displayAICards = true;
-      let playerData = this.state.playerData;
-      let tableCards = this.state.tableCards;
+      let newPlayerData = this.state.playerData;
+      let newTableCards = this.state.tableCards;
       gameResult = getWinner(this.state.playerData, this.state.tableCards);
       infoMessages.add(gameResult.notify);
 
-      // watch for error
+      // watch for that pesky error
       if (!gameResult.error) {
         console.log('gameResult: ', gameResult);
         if (gameResult.winners.length < 1) throw new Error('No winners in gameResult!');
 
         // highlight winning cards
         const highlights = this.getHighlightedWinningCards(gameResult);
-        playerData = highlights.playerData;
-        tableCards = highlights.tableCards;
+        newPlayerData = highlights.playerData;
+        newTableCards = highlights.tableCards;
         // todo: pot splitting and such
       }
 
+      newPlayerData.player.options = {
+        Fold: false,
+        Call: false,
+        Deal: false,
+        'New Game': true,
+        Raise: false,
+      };
+
       this.setState({
-        playerData,
-        tableCards,
+        playerData: newPlayerData,
+        tableCards: newTableCards,
         displayAICards,
         gameStage: gameStage + 1,
-        playerOptions: { Fold: false, Call: false, Deal: false, 'New Game': true },
         infoMessages,
       });
     }
@@ -216,41 +243,84 @@ class Poker extends Component {
   newGame = () => {
     deck.reset();
     console.clear();
+    const playerData = createBasePlayerData();
+    playerData.player.balance = this.state.playerData.player.balance;
+    playerData.ai1.balance = this.state.playerData.ai1.balance;
+    playerData.ai2.balance = this.state.playerData.ai2.balance;
+    playerData.ai3.balance = this.state.playerData.ai3.balance;
     this.setState({
-      playerData: {
-        player: { id: 'player', active: true, hand: [] },
-        ai1: { id: 'ai1', active: true, hand: [] },
-        ai2: { id: 'ai2', active: true, hand: [] },
-        ai3: { id: 'ai3', active: true, hand: [] },
-      },
+      playerData,
       tableCards: [],
-      playerOptions: { Fold: false, Call: false, Deal: true, 'New Game': false },
       displayAICards: false,
       gameStage: 0,
       playerIsActive: true,
       infoMessages: new InfoMessagesQueue(),
+      potAmt: 0,
     });
   };
 
-  fold = playerID => {
+  fold = async playerID => {
     const newPlayerData = clonePlayerData(this.state.playerData);
     newPlayerData[playerID].active = false;
     const playerIsActive = playerID === 'player' ? false : this.state.playerIsActive;
+    if (playerID === 'player') {
+      newPlayerData.player.options = {
+        Fold: false,
+        Call: false,
+        Deal: false,
+        'New Game': false,
+        Raise: false,
+      };
+    }
     const infoMessages = this.state.infoMessages.copy().add(`${fullNames[playerID]} folds.`);
-    this.setState(
+    await this.setState(
       {
         playerData: newPlayerData,
         playerIsActive,
-        playerOptions: { Fold: false, Call: false, Deal: false, 'New Game': false },
         infoMessages,
       },
       this.deal
     );
   };
 
-  raise = playerID => {};
+  next = () => {
+    // who's move is it next?
+    const nextPlayer = this.getNextPlayer(this.state.currentPlayerID);
+    // is this person allowed to bet?
+    // refer to ai engine
+  };
 
-  call = playerID => {
+  raise = async (playerID, amount) => {
+    const infoMessages = this.state.infoMessages.copy();
+    const playerData = clonePlayerData(this.state.playerData);
+    // verify the player has that much money
+    if (playerData[playerID].balance < amount)
+      return window.alert('Sorry, you cannot raise more than you have!');
+    // verify that the raise exceeds the call
+    // if so, subtract from player and add to pot
+    playerData[playerID].balance -= amount;
+    playerData[playerID].currentBet += amount;
+    const potAmt = this.state.potAmt + amount;
+    infoMessages.add(`${playerID} raises $${amount}.`);
+    await this.setState({
+      playerData,
+      potAmt,
+      infoMessages,
+    });
+    this.deal();
+  };
+
+  call = async playerID => {
+    // check the required amount
+    const amountRequired = Math.max(
+      ...Object.values(this.state.playerData).map(playerObj => playerObj.currentBet)
+    );
+    // if not, amount is all in
+    // add that amount to the pot
+    const infoMessages = this.state.infoMessages.copy();
+    infoMessages.add(`${playerID} calls.`);
+    await this.setState({ infoMessages });
+    // next action... ?
     this.deal();
   };
 
@@ -272,6 +342,7 @@ class Poker extends Component {
             key={playerData.ai2}
             showCards={displayAICards}
           />
+          <Balance area="pot" amount={this.state.potAmt} />
           <AI
             data={playerData.ai3}
             tableCards={tableCards}
@@ -286,8 +357,9 @@ class Poker extends Component {
               Call: this.call,
               Deal: this.deal,
               'New Game': this.newGame,
+              Raise: this.raise,
             }}
-            options={playerOptions}
+            options={playerData.player.options}
           />
         </StyledPoker>
         <button
