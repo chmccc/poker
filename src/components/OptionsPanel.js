@@ -61,28 +61,26 @@ class OptionsPanel extends React.Component {
   };
 
   render() {
-    const { options, callbacks } = this.props;
+    const { options, requiredToCall } = this.props;
+    let { callbacks } = this.props;
+
     return (
       <StyledOptionsPanel>
         <h4>Options</h4>
         <div id="PlayerOptions">
-          <StyledButton onClick={() => callbacks.Deal('player')} disabled={!options.Deal}>
+          <StyledButton onClick={callbacks.Deal} disabled={!options.Deal}>
             Deal
           </StyledButton>
-          <StyledButton
-            onClick={() => callbacks['New Game']('player')}
-            disabled={!options['New Game']}>
+          <StyledButton onClick={callbacks['New Game']} disabled={!options['New Game']}>
             New Game
           </StyledButton>
-          <StyledButton onClick={() => callbacks.Call('player')} disabled={!options.Call}>
-            Call
+          <StyledButton onClick={callbacks.Call} disabled={!options.Call}>
+            {`Call ($${requiredToCall}):`}
           </StyledButton>
-          <StyledButton onClick={() => callbacks.Fold('player')} disabled={!options.Fold}>
+          <StyledButton onClick={callbacks.Fold} disabled={!options.Fold}>
             Fold
           </StyledButton>
-          <StyledButton
-            onClick={() => callbacks.Raise('player', this.state.bet)}
-            disabled={!options.Raise}>
+          <StyledButton onClick={() => callbacks.Raise(this.state.bet)} disabled={!options.Raise}>
             Bet/Raise:
           </StyledButton>
           <StyledInput onChange={this.onInputChange} value={this.state.bet} />
