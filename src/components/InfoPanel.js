@@ -13,6 +13,17 @@ const StyledInfoPanel = styled.div`
     font-size: 12px;
     margin: 1px 20px;
   }
+  .blink {
+    animation-name: blinker;
+    animation-duration: 500ms;
+    animation-timing-function: linear;
+    animation-iteration-count: 2;
+  }
+  @keyframes blinker {
+    50% {
+      opacity: 0;
+    }
+  }
 `;
 
 const InfoPanel = ({ messages }) => {
@@ -27,8 +38,10 @@ const InfoPanel = ({ messages }) => {
       ref={el => {
         div = el;
       }}>
-      {messages.toArray().map((str, i) => (
-        <p key={`${str.slice(0, 20)}_${i}`}>{str}</p>
+      {messages.toArray().map((str, i, arr) => (
+        <p key={`${str.slice(0, 20)}_${i}`} className={`${i === arr.length - 1 ? 'blink' : ''}`}>
+          {str}
+        </p>
       ))}
     </StyledInfoPanel>
   );
