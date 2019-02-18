@@ -69,7 +69,6 @@ class Poker extends Component {
       debug: false,
       potAmt: 0,
       currentPlayerID: 'player',
-      fullRotation: false,
       highBet: 0,
     };
   }
@@ -101,125 +100,66 @@ class Poker extends Component {
       playerIsActive: true,
       infoMessages: new InfoMessagesQueue(),
       potAmt: 0,
+      highBet: 0,
+      currPlayerID: 'player',
     });
   };
 
-  deal = () => {
-    const { gameStage, playerIsActive } = this.state;
+  deal = async () => {
+    let playerData = clonePlayerData(this.state.playerData);
     let infoMessages = this.state.infoMessages.copy();
+    let tableCards = this.state.tableCards;
+    let { displayAICards, gameStage } = this.state;
+    const { playerIsActive } = this.state;
+    console.log('dealing, gamestage: ', gameStage);
+
+    // reset players turns taken back to false
+    Object.values(playerData).forEach(player => {
+      player.hasPlayedThisRound = false;
+    });
 
     if (gameStage === 0) {
       // deal players cards
       infoMessages.add('Hole cards dealt.');
-      const newPlayerData = clonePlayerData(this.state.playerData);
 
-      // DEBUG STUFF
-      if (this.state.debug) {
-        infoMessages.add('<<DEBUG MODE: Hole cards overridden. >>');
-        debugHolePlayerData(newPlayerData);
-      } else {
-        Object.values(newPlayerData).forEach(playerObj => {
-          playerObj.hand = [deck.dealCard(), deck.dealCard()];
-        });
-      }
-      newPlayerData.player.options = {
-        Deal: false,
-        Fold: playerIsActive,
-        Call: playerIsActive,
-        'New Game': false,
-        Raise: playerIsActive,
-      };
-      this.setState({
-        playerData: newPlayerData,
-        gameStage: gameStage + 1,
-        infoMessages,
+      Object.values(playerData).forEach(playerObj => {
+        playerObj.hand = [deck.dealCard(), deck.dealCard()];
       });
-    }
-
-    if (gameStage === 1) {
+    } else if (gameStage === 1) {
       // deal the flop
       infoMessages.add('Flop dealt.');
-      const newTableCards = addToTableCards(this.state.tableCards, 3);
-      const newPlayerData = clonePlayerData(this.state.playerData);
-      newPlayerData.player.options = {
-        Deal: false,
-        Fold: playerIsActive,
-        Call: playerIsActive,
-        'New Game': false,
-        Raise: playerIsActive,
-      };
-      this.setState({
-        playerData: newPlayerData,
-        tableCards: newTableCards,
-        gameStage: gameStage + 1,
-        infoMessages,
-      });
-    }
-
-    if (gameStage === 2 || gameStage === 3) {
+      tableCards = addToTableCards(tableCards, 3);
+    } else if (gameStage === 2 || gameStage === 3) {
       // deal the turn/river
       infoMessages.add(gameStage === 2 ? 'Turn dealt.' : 'River dealt.');
-      let newTableCards = addToTableCards(this.state.tableCards, 1);
-      const newPlayerData = clonePlayerData(this.state.playerData);
-      // DEBUG RIVER OVERRIDE:
-      if (gameStage === 3 && this.state.debug) {
-        infoMessages.add('<< DEBUG MODE: River overridden. >>');
-        newTableCards = debugTableCards();
-      }
-
-      newPlayerData.player.options = {
-        Deal: false,
-        Fold: playerIsActive,
-        Call: playerIsActive,
-        'New Game': false,
-        Raise: playerIsActive,
-      };
-
-      this.setState({
-        playerData: newPlayerData,
-        tableCards: newTableCards,
-        gameStage: gameStage + 1,
-        infoMessages,
-      });
-    }
-
-    if (gameStage === 4) {
-      let gameResult;
-      let displayAICards = true;
-      let newPlayerData = this.state.playerData;
-      let newTableCards = this.state.tableCards;
-      gameResult = getWinner(this.state.playerData, this.state.tableCards);
+      tableCards = addToTableCards(this.state.tableCards, 1);
+    } else if (gameStage === 4) {
+      displayAICards = true;
+      const gameResult = getWinner(this.state.playerData, this.state.tableCards);
       infoMessages.add(gameResult.notify);
 
       // watch for that pesky error
       if (!gameResult.error) {
         console.log('gameResult: ', gameResult);
         if (gameResult.winners.length < 1) throw new Error('No winners in gameResult!');
-
         // highlight winning cards
         const highlights = this.getHighlightedWinningCards(gameResult);
-        newPlayerData = highlights.playerData;
-        newTableCards = highlights.tableCards;
+        playerData = highlights.playerData;
+        tableCards = highlights.tableCards;
         // todo: pot splitting and such
-      }
-
-      newPlayerData.player.options = {
-        Fold: false,
-        Call: false,
-        Deal: false,
-        'New Game': true,
-        Raise: false,
-      };
-
-      this.setState({
-        playerData: newPlayerData,
-        tableCards: newTableCards,
-        displayAICards,
-        gameStage: gameStage + 1,
-        infoMessages,
-      });
+      } else infoMessages.add('Got that shitty error.');
     }
-    if (!playerIsActive && gameStage < 4) setTimeout(this.deal, 1000);
+
+    await this.setState({
+      playerData,
+      tableCards,
+      displayAICards,
+      gameStage: gameStage + 1,
+      infoMessages,
+    });
+
+    if (!playerIsActive) return this.tick();
+    return this.enablePlayerOptions();
   };
 
   // todo: this probably belongs in helpers
@@ -258,7 +198,7 @@ class Poker extends Component {
     return { tableCards, playerData };
   };
 
-  enablePlayerOptions = () => {
+  enablePlayerOptions = async () => {
     const playerData = clonePlayerData(this.state.playerData);
     playerData.player.options = {
       Fold: false,
@@ -267,14 +207,25 @@ class Poker extends Component {
       'New Game': false,
       Raise: false,
     };
-    if (this.state.gameStage === 4) playerData.player.options.NewGame = true;
-    else {
-      const { balance, currentBet } = playerData.player;
+    const { options } = playerData.player;
+    if (this.state.gameStage === 5) {
+      options['New Game'] = true;
+      return this.setState({ playerData });
+    } else {
+      const { balance, currentBet, hasPlayedThisRound } = playerData.player;
       const { highBet } = this.state;
-      playerData.player.options.Call = this.playerIsActive && balance >= highBet - currentBet;
+      let roundFinished = false;
+      options.Call = options.Raise = options.Fold = this.state.playerIsActive;
+      if (currentBet === highBet && hasPlayedThisRound) roundFinished = true;
+      if (balance < highBet - currentBet || roundFinished) {
+        options.Call = options.Raise = false;
+      }
+      if (balance < highBet + 10) options.Raise = false;
+      if (roundFinished) {
+        options.Deal = true;
+        options.Fold = false;
+      }
       // todo: change when betting increments are implemented
-      playerData.player.options.Raise = this.playerIsActive && balance >= highBet - currentBet + 10;
-      playerData.player.options.Fold = true;
     }
     return this.setStatePromise({ playerData });
   };
@@ -293,8 +244,26 @@ class Poker extends Component {
 
   tick = async () => {
     // whose move is it next?
+    if (Object.values(this.state.playerData).filter(player => player.active).length < 2) {
+      window.alert('Errbody folded');
+      return this.newGame();
+    }
     const currentPlayerID = this.getNextPlayer(this.state.currentPlayerID);
     await this.setState({ currentPlayerID });
+
+    const playerData = clonePlayerData(this.state.playerData);
+    const { [currentPlayerID]: currPlayerData } = playerData;
+    const { currentBet, hasPlayedThisRound } = currPlayerData;
+    const { highBet } = this.state;
+
+    if (this.state.gameStage >= 5) return this.enablePlayerOptions();
+    // check whether the round is over
+    // i.e., this player has played a turn and there's no bet to them
+    // console.log(
+    //   `checking if round is over. currentBet: ${currentBet} highBet: ${highBet}, hasPlayedThisRound: ${hasPlayedThisRound}`
+    // );
+    if (currentBet === highBet && hasPlayedThisRound) return this.deal();
+
     if (currentPlayerID === 'player') {
       // if player, set the player options and stop tick cycle
       return this.enablePlayerOptions();
@@ -302,31 +271,25 @@ class Poker extends Component {
     await this.disablePlayerOptions();
 
     // begin ai-only behavior
-    const playerData = clonePlayerData(this.state.playerData);
-    const { [currentPlayerID]: currPlayerData, highBet } = playerData;
-    // is this person allowed to raise? if not, deal
-    let canRaise = highBet > currPlayerData.currentBet;
 
-    await sleep(1000);
+    // is this ai allowed to raise?
+    let canRaise = !currPlayerData.hasPlayedThisRound || highBet > currPlayerData.currentBet;
+
+    await sleep(500);
 
     // make their move (call, raise, fold)
     const { decision, totalAmt } = getDecision(playerData, currentPlayerID, canRaise);
     await this[decision](currentPlayerID)(totalAmt);
 
-    // determine whether the round is over or we need to keep ticking
-    const nextPlayer = this.getNextPlayer(currentPlayerID);
-    const { currentBet, hasPlayedThisRound } = playerData[nextPlayer];
-    if (currentBet === highBet && hasPlayedThisRound) {
-      // the next guy is already called and has already had a turn
-      // then the round is over and we deal
-      return this.deal();
-    } else this.tick();
+    await sleep(500);
+    this.tick();
   };
 
   fold = playerID => async () => {
     const playerData = clonePlayerData(this.state.playerData);
     let playerIsActive = this.state.playerIsActive;
     playerData[playerID].active = false;
+    playerData[playerID].hasPlayedThisRound = true;
     const infoMessages = this.state.infoMessages
       .copy()
       .add(`${playerData[playerID].fullName} folds.`);
@@ -335,6 +298,7 @@ class Poker extends Component {
       await this.disablePlayerOptions();
       // todo: a bunch of other validations
       // start ticking
+      await this.setState({ playerData, playerIsActive, infoMessages });
       return this.tick();
     }
     return this.setStatePromise({ playerData, playerIsActive, infoMessages });
@@ -342,41 +306,57 @@ class Poker extends Component {
 
   raise = playerID => async amount => {
     const playerData = clonePlayerData(this.state.playerData);
+    let { highBet } = this.state;
     if (playerID === 'player') {
       // verify the player has that much money
       const { balance } = playerData.player;
-      if (balance < amount) {
-        return window.alert('Sorry, you cannot bet more than you have!');
-      }
+      const amountRequired = highBet - playerData.player.currentBet;
+      if (balance < amountRequired) {
+        return window.alert('Sorry, you cannot afford to raise that much!');
+      } else amount += amountRequired; // add the raise to the call
       // todo: a bunch of other verifications
     }
+    playerData[playerID].hasPlayedThisRound = true;
     // subtract from balance and add to pot
     playerData[playerID].balance -= amount;
     playerData[playerID].currentBet += amount;
     const potAmt = this.state.potAmt + amount;
-    const infoMessages = this.state.infoMessages.copy().add(`${playerID} raises $${amount}.`);
-    return this.setStatePromise({ playerData, potAmt, infoMessages, highBet: amount });
+    const infoMessages = this.state.infoMessages
+      .copy()
+      .add(`${playerData[playerID].fullName} raises ($${amount}).`);
+    highBet += amount;
+    if (playerID === 'player') {
+      await this.setState({ playerData, potAmt, infoMessages, highBet });
+      return this.tick();
+    }
+    return this.setStatePromise({ playerData, potAmt, infoMessages, highBet });
   };
 
   call = playerID => async amount => {
     const playerData = clonePlayerData(this.state.playerData);
+    const { highBet } = this.state;
     if (playerID === 'player') {
       // check the player has the required amount
       const { balance } = playerData.player;
-      const amountRequired =
-        Math.max(...Object.values(this.state.playerData).map(playerObj => playerObj.currentBet)) -
-        playerData.player.currentBet;
+      const amountRequired = highBet - playerData.player.currentBet;
       if (balance < amountRequired) {
         return window.alert(
           'Sorry, you cannot afford to call, and there is no "all in" feature yet!'
         );
       } else amount = amountRequired;
     }
+    playerData[playerID].hasPlayedThisRound = true;
     // subtract from balance and add to pot
     playerData[playerID].balance -= amount;
     playerData[playerID].currentBet += amount;
     const potAmt = this.state.potAmt + amount;
-    const infoMessages = this.state.infoMessages.copy().add(`${playerID} calls.`);
+    const infoMessages = this.state.infoMessages
+      .copy()
+      .add(`${playerData[playerID].fullName} calls. ($${amount})`);
+    if (playerID === 'player') {
+      await this.setState({ playerData, potAmt, infoMessages });
+      return this.tick();
+    }
     return this.setStatePromise({ playerData, potAmt, infoMessages });
   };
 
@@ -386,25 +366,13 @@ class Poker extends Component {
       <Fragment>
         <StyledPoker>
           <InfoPanel messages={this.state.infoMessages} />
-          <AI
-            data={playerData.ai1}
-            tableCards={tableCards}
-            key={playerData.ai1.id}
-            showCards={displayAICards}
-          />
-          <AI
-            data={playerData.ai2}
-            tableCards={tableCards}
-            key={playerData.ai2}
-            showCards={displayAICards}
-          />
+          {Object.values(this.state.playerData)
+            .filter(data => data.id !== 'player')
+            .sort((data1, data2) => data1.id - data2.id)
+            .map(data => (
+              <AI key={data.id} data={data} tableCards={tableCards} showCards={displayAICards} />
+            ))}
           <Balance area="pot" amount={this.state.potAmt} />
-          <AI
-            data={playerData.ai3}
-            tableCards={tableCards}
-            key={playerData.ai3.id}
-            showCards={displayAICards}
-          />
           <Table cards={tableCards} />
           <PlayerDashboard
             data={playerData.player}
@@ -420,7 +388,7 @@ class Poker extends Component {
                     'New Game': this.newGame,
                     Raise: this.raise('player'),
                   }}
-                  requiredToCall={this.state.highBet - playerData.player.currentBet}
+                  requiredToCall={highBet - playerData.player.currentBet}
                 />
               </Fragment>
             )}
