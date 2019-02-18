@@ -17,18 +17,18 @@ const StyledBalance = styled.div`
   border-radius: 5px;
   .balance-title {
     font-size: ${props => (props.area === 'pot' ? '1.1em' : '0.9em')};
-    font-weight: 600;
+    font-weight: ${props => (props.area === 'pot' ? 600 : 400)};
     font-family: Courgette;
-    margin: ${props => (props.area === 'pot' ? '0 0 15px 0' : '15px 0')};
+    margin: ${props => (props.area === 'pot' ? '0 0 15px 0' : '5px 0')};
   }
 `;
 
-const Balance = ({ amount, area }) => {
-  const text = area === 'pot' ? 'Pot:' : 'Balance:';
+const Balance = ({ amount, area, render }) => {
   return (
     <StyledBalance area={area}>
-      <div className="balance-title">{text}</div>
+      <div className="balance-title">{area === 'pot' ? 'Pot:' : 'Balance:'}</div>
       <div>{`$${amount}`}</div>
+      {render ? render() : null}
     </StyledBalance>
   );
 };

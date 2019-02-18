@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import Card from './Card.js';
 import styled from 'styled-components';
 import Balance from './Balance.js';
@@ -9,7 +9,7 @@ const StyledAI = styled.div`
   justify-self: center;
   /* justify-self: ${props => (props.top ? 'start' : 'center')}; */
   width: ${props => (props.top ? '300px' : '160px')};
-  height: ${props => (props.top ? 'auto' : '80%')};
+  height: ${props => (props.top ? 'auto' : '90%')};
   border: 3px solid #411f18;
   background-color: rgb(0, 61, 0);
   border-radius: 5px;
@@ -48,7 +48,16 @@ const AI = ({ data, showCards }) => {
             />
           ))}
         </div>
-        <Balance area="ai" amount={data.balance} />
+        <Balance
+          area="ai"
+          amount={data.balance}
+          render={() => (
+            <Fragment>
+              <div className="balance-title">Current Bet:</div>
+              <div>{`$${data.currentBet}`}</div>
+            </Fragment>
+          )}
+        />
       </div>
     </StyledAI>
   );

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import styled from 'styled-components';
 import Balance from './Balance';
 
@@ -28,7 +28,16 @@ const PlayerDashboard = ({ data, render }) => {
     <StyledPlayerDashboard>
       <div id="status-wrapper">
         <h4>{`Player${data.active ? '' : ' (folded)'}`}</h4>
-        <Balance area="player" amount={data.balance} />
+        <Balance
+          area="player"
+          amount={data.balance}
+          render={() => (
+            <Fragment>
+              <div className="balance-title">Current Bet:</div>
+              <div>{`$${data.currentBet}`}</div>
+            </Fragment>
+          )}
+        />
       </div>
       {render()}
     </StyledPlayerDashboard>
