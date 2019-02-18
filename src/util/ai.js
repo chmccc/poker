@@ -2,13 +2,13 @@
  * @module ai
  * @description AI engine to make betting decisions for computer players
  * @version 0.1alpha
- * Prototype: Raises between 10 and 30 (random - 20%), folds (random - 10%), and calls (random - 70%)
+ * Prototype: Raises (random - 10%), folds (random - 20%), and calls (random - 70%)
  * MVP: bets sensible amounts based on strength/potential of own cards
  * Fully featured: considers other players' cards, has bluff logic, uses FSM for varied play strategy (big blind, dealer, SB, losing, winning, etc)
  */
 
-const getDecision = (playerData, player) => {
-  const choiceObject = { choice: '', raise: 0, total: 0 };
+const getDecision = (playerData, player, canRaise = true) => {
+  const decisionObj = { decision: '', raiseAmt: 0, totalAmt: 0 };
   const { currentBet } = playerData[player];
   let { balance } = playerData[player];
   // can the player call?
@@ -18,27 +18,28 @@ const getDecision = (playerData, player) => {
         .filter(p => p.active)
         .map(p => p.currentBet) // makes an array of all current bets from active players
     ) - currentBet;
-  if (balance < requiredToCall) choiceObject.choice = 'fold';
+  if (balance < requiredToCall) decisionObj.decision = 'fold';
   else {
     let bettingBalance = balance - requiredToCall;
     if (bettingBalance > 200) bettingBalance = 200; // never more than 200
     const randInt = Math.random();
-    if (randInt < 0.1) choiceObject.choice = 'fold';
-    else if (randInt < 0.3 && bettingBalance >= 10) {
-      choiceObject.choice = 'raise';
-      choiceObject.raise = Math.ceil(Math.random() * ((bettingBalance - requiredToCall) / 10)) * 10;
-      if (choiceObject.raise > 50 && Math.random() < 0.8) {
+    if (randInt < 0.1) decisionObj.decision = 'fold';
+    else if (canRaise && randInt < 0.2 && bettingBalance >= 10) {
+      decisionObj.decision = 'raise';
+      decisionObj.raiseAmt =
+        Math.ceil(Math.random() * ((bettingBalance - requiredToCall) / 10)) * 10;
+      if (decisionObj.raiseAmt > 50 && Math.random() < 0.8) {
         // divide large bets by 2 most of the time
-        choiceObject.raise = Math.round(choiceObject.raise / 10 / 2) * 10;
+        decisionObj.raiseAmt = Math.round(decisionObj.raiseAmt / 10 / 2) * 10;
       }
-      // add the raise to the required call for the total bet
-      choiceObject.total += requiredToCall + choiceObject.raise;
+      // add the raiseAmt to the required call for the totalAmt bet
+      decisionObj.totalAmt += requiredToCall + decisionObj.raiseAmt;
     } else {
-      choiceObject.choice = 'call';
-      choiceObject.total = requiredToCall;
+      decisionObj.decision = 'call';
+      decisionObj.totalAmt = requiredToCall;
     }
   }
-  return choiceObject;
+  return decisionObj;
 };
 
 /* DEBUG ---

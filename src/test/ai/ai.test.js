@@ -14,24 +14,24 @@ describe('prototype version tests for getNextMove', () => {
   test('it returns either a fold, call, or raise', () => {
     dummyPlayerData.ai1.currentBet = 0;
     dummyPlayerData.ai1.balance = 100;
-    const choiceObj = getDecision(dummyPlayerData, 'ai1');
-    expect(/fold|call|raise/g.test(choiceObj.choice)).toBe(true);
+    const decisionObj = getDecision(dummyPlayerData, 'ai1');
+    expect(/fold|call|raise/g.test(decisionObj.decision)).toBe(true);
   });
 
-  test('it returns fold choice when unable to call', () => {
+  test('it returns fold decision when unable to call', () => {
     dummyPlayerData.ai1.currentBet = 0;
     dummyPlayerData.ai1.balance = 20;
-    const choiceObj = getDecision(dummyPlayerData, 'ai1');
-    expect(choiceObj.choice).toBe('fold');
+    const decisionObj = getDecision(dummyPlayerData, 'ai1');
+    expect(decisionObj.decision).toBe('fold');
   });
 
-  test('it is capable of returning all 3 choices when run many times (300x)', () => {
+  test('it is capable of returning all 3 decisions when run many times (300x)', () => {
     dummyPlayerData.ai1.currentBet = 10;
     dummyPlayerData.ai1.balance = 100;
     const required = ['fold', 'call', 'raise'];
     const results = Array(300)
       .fill('')
-      .map(() => getDecision(dummyPlayerData, 'ai1').choice);
+      .map(() => getDecision(dummyPlayerData, 'ai1').decision);
     expect(results).toEqual(expect.arrayContaining(required));
   });
 
@@ -39,9 +39,9 @@ describe('prototype version tests for getNextMove', () => {
     dummyPlayerData.ai1.currentBet = 10;
     dummyPlayerData.ai1.balance = 100;
     for (let i = 0; i < 100; i++) {
-      const choiceObj = getDecision(dummyPlayerData, 'ai1');
-      if (choiceObj.choice !== 'fold') {
-        expect(choiceObj.total).toBeGreaterThanOrEqual(20);
+      const decisionObj = getDecision(dummyPlayerData, 'ai1');
+      if (decisionObj.decision !== 'fold') {
+        expect(decisionObj.totalAmt).toBeGreaterThanOrEqual(20);
       }
     }
   });
@@ -51,13 +51,13 @@ describe('prototype version tests for getNextMove', () => {
     dummyPlayerData.ai1.balance = 1000;
     let gotARaise = false;
     for (let i = 0; i < 500; i++) {
-      const choiceObj = getDecision(dummyPlayerData, 'ai1');
-      if (choiceObj.choice === 'raise') {
+      const decisionObj = getDecision(dummyPlayerData, 'ai1');
+      if (decisionObj.decision === 'raise') {
         gotARaise = true;
-        expect(typeof choiceObj.raise).toBe('number');
-        expect(choiceObj.raise).toBeGreaterThanOrEqual(10);
-        expect(choiceObj.raise).toBeLessThanOrEqual(200);
-        expect(choiceObj.raise % 10).toEqual(0);
+        expect(typeof decisionObj.raiseAmt).toBe('number');
+        expect(decisionObj.raiseAmt).toBeGreaterThanOrEqual(10);
+        expect(decisionObj.raiseAmt).toBeLessThanOrEqual(200);
+        expect(decisionObj.raiseAmt % 10).toEqual(0);
       }
     }
     expect(gotARaise).toEqual(true);
