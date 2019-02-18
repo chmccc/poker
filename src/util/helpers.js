@@ -61,6 +61,7 @@ const createBasePlayerData = () => {
       hand: [],
       balance: 100,
       currentBet: 0,
+      hasPlayedThisRound: false,
       options: { Fold: false, Call: false, Deal: true, 'New Game': false, Raise: false },
     },
     ai1: {
@@ -70,6 +71,7 @@ const createBasePlayerData = () => {
       hand: [],
       balance: 100,
       currentBet: 0,
+      hasPlayedThisRound: false,
       options: { Fold: false, Call: false, Raise: false },
     },
     ai2: {
@@ -79,6 +81,7 @@ const createBasePlayerData = () => {
       hand: [],
       balance: 100,
       currentBet: 0,
+      hasPlayedThisRound: false,
       options: { Fold: false, Call: false, Raise: false },
     },
     ai3: {
@@ -88,10 +91,13 @@ const createBasePlayerData = () => {
       hand: [],
       balance: 100,
       currentBet: 0,
+      hasPlayedThisRound: false,
       options: { Fold: false, Call: false, Raise: false },
     },
   };
 };
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 export {
   createHand,
@@ -100,4 +106,5 @@ export {
   highlightSelectCards,
   addToTableCards,
   createBasePlayerData,
+  sleep,
 };

@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import styled from 'styled-components';
 
 import { InfoMessagesQueue } from './util/infoMessagesQueue';
@@ -9,6 +9,7 @@ import {
   addToTableCards,
   createHand,
   createBasePlayerData,
+  sleep,
 } from './util/helpers';
 import { deck } from './util/deck.js'; // this is the initialized deck instance
 
@@ -17,6 +18,9 @@ import Table from './components/Table.js';
 import AI from './components/AI';
 import InfoPanel from './components/InfoPanel';
 import Balance from './components/Balance';
+import PlayerHand from './components/PlayerHand';
+import OptionsPanel from './components/OptionsPanel';
+import { getDecision } from './util/ai';
 
 /* DEBUG STUFF */
 
@@ -52,14 +56,6 @@ const StyledPoker = styled.div`
   border-radius: 20px;
 `;
 
-// todo: merge into playerData
-const fullNames = {
-  ai1: 'AI Opponent 1',
-  ai2: 'AI Opponent 2',
-  ai3: 'AI Opponent 3',
-  player: 'Player',
-};
-
 class Poker extends Component {
   constructor(props) {
     super(props);
@@ -68,7 +64,7 @@ class Poker extends Component {
       tableCards: [],
       displayAICards: false,
       gameStage: 0,
-      playerIsActive: true,
+      playerIsActive: true, // todo: refactor, unnecessary, keep track in playerData
       infoMessages: new InfoMessagesQueue(),
       debug: false,
       potAmt: 0,
@@ -78,6 +74,8 @@ class Poker extends Component {
     };
   }
 
+  setStatePromise = state => new Promise(resolve => this.setState(state, resolve));
+
   /** Returns a string for the next active player in the turn order */
   getNextPlayer = currentPlayerID => {
     // todo: refac to linked list?
@@ -85,6 +83,25 @@ class Poker extends Component {
     let index = playerOrder.indexOf(currentPlayerID);
     while (!this.state.playerData[playerOrder[++index]].active) {}
     return playerOrder[index];
+  };
+
+  newGame = () => {
+    deck.reset();
+    console.clear();
+    const playerData = createBasePlayerData();
+    playerData.player.balance = this.state.playerData.player.balance;
+    playerData.ai1.balance = this.state.playerData.ai1.balance;
+    playerData.ai2.balance = this.state.playerData.ai2.balance;
+    playerData.ai3.balance = this.state.playerData.ai3.balance;
+    this.setState({
+      playerData,
+      tableCards: [],
+      displayAICards: false,
+      gameStage: 0,
+      playerIsActive: true,
+      infoMessages: new InfoMessagesQueue(),
+      potAmt: 0,
+    });
   };
 
   deal = () => {
@@ -205,6 +222,7 @@ class Poker extends Component {
     if (!playerIsActive && gameStage < 4) setTimeout(this.deal, 1000);
   };
 
+  // todo: this probably belongs in helpers
   getHighlightedWinningCards = gameResult => {
     // create helper objects of cards used to pass to highlightSelectCards
     const usedCards = new Set();
@@ -240,94 +258,132 @@ class Poker extends Component {
     return { tableCards, playerData };
   };
 
-  newGame = () => {
-    deck.reset();
-    console.clear();
-    const playerData = createBasePlayerData();
-    playerData.player.balance = this.state.playerData.player.balance;
-    playerData.ai1.balance = this.state.playerData.ai1.balance;
-    playerData.ai2.balance = this.state.playerData.ai2.balance;
-    playerData.ai3.balance = this.state.playerData.ai3.balance;
-    this.setState({
-      playerData,
-      tableCards: [],
-      displayAICards: false,
-      gameStage: 0,
-      playerIsActive: true,
-      infoMessages: new InfoMessagesQueue(),
-      potAmt: 0,
-    });
-  };
-
-  fold = async playerID => {
-    const newPlayerData = clonePlayerData(this.state.playerData);
-    newPlayerData[playerID].active = false;
-    const playerIsActive = playerID === 'player' ? false : this.state.playerIsActive;
-    if (playerID === 'player') {
-      newPlayerData.player.options = {
-        Fold: false,
-        Call: false,
-        Deal: false,
-        'New Game': false,
-        Raise: false,
-      };
-    }
-    const infoMessages = this.state.infoMessages.copy().add(`${fullNames[playerID]} folds.`);
-    await this.setState(
-      {
-        playerData: newPlayerData,
-        playerIsActive,
-        infoMessages,
-      },
-      this.deal
-    );
-  };
-
-  next = () => {
-    // who's move is it next?
-    const nextPlayer = this.getNextPlayer(this.state.currentPlayerID);
-    // is this person allowed to bet?
-    // refer to ai engine
-  };
-
-  raise = async (playerID, amount) => {
-    const infoMessages = this.state.infoMessages.copy();
+  enablePlayerOptions = () => {
     const playerData = clonePlayerData(this.state.playerData);
-    // verify the player has that much money
-    if (playerData[playerID].balance < amount)
-      return window.alert('Sorry, you cannot raise more than you have!');
-    // verify that the raise exceeds the call
-    // if so, subtract from player and add to pot
+    playerData.player.options = {
+      Fold: false,
+      Call: false,
+      Deal: false,
+      'New Game': false,
+      Raise: false,
+    };
+    if (this.state.gameStage === 4) playerData.player.options.NewGame = true;
+    else {
+      const { balance, currentBet } = playerData.player;
+      const { highBet } = this.state;
+      playerData.player.options.Call = this.playerIsActive && balance >= highBet - currentBet;
+      // todo: change when betting increments are implemented
+      playerData.player.options.Raise = this.playerIsActive && balance >= highBet - currentBet + 10;
+      playerData.player.options.Fold = true;
+    }
+    return this.setStatePromise({ playerData });
+  };
+
+  disablePlayerOptions = () => {
+    const playerData = clonePlayerData(this.state.playerData);
+    playerData.player.options = {
+      Fold: false,
+      Call: false,
+      Deal: false,
+      'New Game': false,
+      Raise: false,
+    };
+    return this.setStatePromise({ playerData });
+  };
+
+  tick = async () => {
+    // whose move is it next?
+    const currentPlayerID = this.getNextPlayer(this.state.currentPlayerID);
+    await this.setState({ currentPlayerID });
+    if (currentPlayerID === 'player') {
+      // if player, set the player options and stop tick cycle
+      return this.enablePlayerOptions();
+    }
+    await this.disablePlayerOptions();
+
+    // begin ai-only behavior
+    const playerData = clonePlayerData(this.state.playerData);
+    const { [currentPlayerID]: currPlayerData, highBet } = playerData;
+    // is this person allowed to raise? if not, deal
+    let canRaise = highBet > currPlayerData.currentBet;
+
+    await sleep(1000);
+
+    // make their move (call, raise, fold)
+    const { decision, totalAmt } = getDecision(playerData, currentPlayerID, canRaise);
+    await this[decision](currentPlayerID)(totalAmt);
+
+    // determine whether the round is over or we need to keep ticking
+    const nextPlayer = this.getNextPlayer(currentPlayerID);
+    const { currentBet, hasPlayedThisRound } = playerData[nextPlayer];
+    if (currentBet === highBet && hasPlayedThisRound) {
+      // the next guy is already called and has already had a turn
+      // then the round is over and we deal
+      return this.deal();
+    } else this.tick();
+  };
+
+  fold = playerID => async () => {
+    const playerData = clonePlayerData(this.state.playerData);
+    let playerIsActive = this.state.playerIsActive;
+    playerData[playerID].active = false;
+    const infoMessages = this.state.infoMessages
+      .copy()
+      .add(`${playerData[playerID].fullName} folds.`);
+    if (playerID === 'player') {
+      playerIsActive = false;
+      await this.disablePlayerOptions();
+      // todo: a bunch of other validations
+      // start ticking
+      return this.tick();
+    }
+    return this.setStatePromise({ playerData, playerIsActive, infoMessages });
+  };
+
+  raise = playerID => async amount => {
+    const playerData = clonePlayerData(this.state.playerData);
+    if (playerID === 'player') {
+      // verify the player has that much money
+      const { balance } = playerData.player;
+      if (balance < amount) {
+        return window.alert('Sorry, you cannot bet more than you have!');
+      }
+      // todo: a bunch of other verifications
+    }
+    // subtract from balance and add to pot
     playerData[playerID].balance -= amount;
     playerData[playerID].currentBet += amount;
     const potAmt = this.state.potAmt + amount;
-    infoMessages.add(`${playerID} raises $${amount}.`);
-    await this.setState({
-      playerData,
-      potAmt,
-      infoMessages,
-    });
-    this.deal();
+    const infoMessages = this.state.infoMessages.copy().add(`${playerID} raises $${amount}.`);
+    return this.setStatePromise({ playerData, potAmt, infoMessages, highBet: amount });
   };
 
-  call = async playerID => {
-    // check the required amount
-    const amountRequired = Math.max(
-      ...Object.values(this.state.playerData).map(playerObj => playerObj.currentBet)
-    );
-    // if not, amount is all in
-    // add that amount to the pot
-    const infoMessages = this.state.infoMessages.copy();
-    infoMessages.add(`${playerID} calls.`);
-    await this.setState({ infoMessages });
-    // next action... ?
-    this.deal();
+  call = playerID => async amount => {
+    const playerData = clonePlayerData(this.state.playerData);
+    if (playerID === 'player') {
+      // check the player has the required amount
+      const { balance } = playerData.player;
+      const amountRequired =
+        Math.max(...Object.values(this.state.playerData).map(playerObj => playerObj.currentBet)) -
+        playerData.player.currentBet;
+      if (balance < amountRequired) {
+        return window.alert(
+          'Sorry, you cannot afford to call, and there is no "all in" feature yet!'
+        );
+      } else amount = amountRequired;
+    }
+    // subtract from balance and add to pot
+    playerData[playerID].balance -= amount;
+    playerData[playerID].currentBet += amount;
+    const potAmt = this.state.potAmt + amount;
+    const infoMessages = this.state.infoMessages.copy().add(`${playerID} calls.`);
+    return this.setStatePromise({ playerData, potAmt, infoMessages });
   };
 
   render() {
-    const { playerData, tableCards, displayAICards, playerOptions } = this.state;
+    const { playerData, tableCards, displayAICards, highBet } = this.state;
     return (
-      <React.Fragment>
+      <Fragment>
         <StyledPoker>
           <InfoPanel messages={this.state.infoMessages} />
           <AI
@@ -352,14 +408,22 @@ class Poker extends Component {
           <Table cards={tableCards} />
           <PlayerDashboard
             data={playerData.player}
-            callbacks={{
-              Fold: this.fold,
-              Call: this.call,
-              Deal: this.deal,
-              'New Game': this.newGame,
-              Raise: this.raise,
-            }}
-            options={playerData.player.options}
+            render={() => (
+              <Fragment>
+                <PlayerHand hand={playerData.player.hand} />
+                <OptionsPanel
+                  options={playerData.player.options}
+                  callbacks={{
+                    Fold: this.fold('player'),
+                    Call: this.call('player'),
+                    Deal: this.deal,
+                    'New Game': this.newGame,
+                    Raise: this.raise('player'),
+                  }}
+                  requiredToCall={this.state.highBet - playerData.player.currentBet}
+                />
+              </Fragment>
+            )}
           />
         </StyledPoker>
         <button
@@ -368,7 +432,7 @@ class Poker extends Component {
             debug = !debug;
             this.setState({ debug });
           }}>{`Debug Mode (${this.state.debug ? 'ON' : 'OFF'})`}</button>
-      </React.Fragment>
+      </Fragment>
     );
   }
 }

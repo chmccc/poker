@@ -1,6 +1,4 @@
 import React from 'react';
-import PlayerHand from '../components/PlayerHand';
-import OptionsPanel from '../components/OptionsPanel';
 import styled from 'styled-components';
 import Balance from './Balance';
 
@@ -25,15 +23,14 @@ const StyledPlayerDashboard = styled.div`
   }
 `;
 
-const PlayerDashboard = ({ data, options, callbacks }) => {
+const PlayerDashboard = ({ data, render }) => {
   return (
     <StyledPlayerDashboard>
       <div id="status-wrapper">
         <h4>{`Player${data.active ? '' : ' (folded)'}`}</h4>
         <Balance area="player" amount={data.balance} />
       </div>
-      <PlayerHand hand={data.hand} />
-      <OptionsPanel options={options} callbacks={callbacks} />
+      {render()}
     </StyledPlayerDashboard>
   );
 };
