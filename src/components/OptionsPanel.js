@@ -63,7 +63,7 @@ class OptionsPanel extends React.Component {
   render() {
     const { options, requiredToCall } = this.props;
     let { callbacks } = this.props;
-
+    let callText = requiredToCall === 0 ? 'Check' : `Call ($${requiredToCall})`;
     return (
       <StyledOptionsPanel>
         <h4>Options</h4>
@@ -75,7 +75,7 @@ class OptionsPanel extends React.Component {
             New Game
           </StyledButton>
           <StyledButton onClick={callbacks.Call} disabled={!options.Call}>
-            {`Call ($${requiredToCall}):`}
+            {callText}
           </StyledButton>
           <StyledButton onClick={callbacks.Fold} disabled={!options.Fold}>
             Fold
