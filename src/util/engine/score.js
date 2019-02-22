@@ -587,7 +587,7 @@ const getWinner = (playerData, tableCards) => {
         tiesByKicker[best.score][handKey][kickerKey]
       ) {
         output.winners = Object.values(tiesByKicker[best.score][handKey][kickerKey]);
-        const ownerNamesArray = output.winners.map(scoreObj => scoreObj.owner);
+        const ownerNamesArray = output.winners.map(scoreObj => playerData[scoreObj.owner].fullName);
         output.notify = `Draw! Pot is split between ${ownerNamesArray.join(' and ')},
           ${ownerNamesArray.length > 2 ? 'all' : 'both'} having ${best.type}.
         `;
@@ -612,7 +612,7 @@ const getWinner = (playerData, tableCards) => {
     }
   } else {
     output.winners.push(best);
-    output.notify = `Game over. ${best.owner} won with ${best.type}${
+    output.notify = `Game over. ${playerData[best.owner].fullName} won with ${best.type}${
       best.validKickers && best.validKickers.length
         ? `, using the ${best.validKickers[0].displayName} as the kicker card`
         : ''

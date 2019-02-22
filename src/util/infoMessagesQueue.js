@@ -7,7 +7,7 @@
 export class InfoMessagesQueue {
   constructor(array) {
     if (array && array.length > 20)
-      throw new Error('InfoMessageQueues cannot contain more than 4 messages');
+      throw new Error('InfoMessageQueues cannot contain more than 20 messages');
     this.q = array || [];
   }
 

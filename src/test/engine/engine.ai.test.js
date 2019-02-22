@@ -1,5 +1,5 @@
-import { getDecision } from '../../util/ai';
 import { createBasePlayerData } from '../../util/helpers';
+import { getDecision } from '../../util/engine/ai';
 
 describe('prototype version tests for getNextMove', () => {
   let dummyPlayerData;

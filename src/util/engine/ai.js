@@ -7,7 +7,7 @@
  * Fully featured: considers other players' cards, has bluff logic, uses FSM for varied play strategy (big blind, dealer, SB, losing, winning, etc)
  */
 
-const getDecision = (playerData, player, canRaise = true) => {
+const getDecision = (playerData, player, canRaise = true, thresholds) => {
   const decisionObj = { decision: '', raiseAmt: 0, totalAmt: 0 };
   const { currentBet } = playerData[player];
   let { balance } = playerData[player];
@@ -20,11 +20,16 @@ const getDecision = (playerData, player, canRaise = true) => {
     ) - currentBet;
   if (balance < requiredToCall) decisionObj.decision = 'fold';
   else {
+    thresholds = {
+      fold: requiredToCall === 0 ? 0 : 0.15,
+      raise: requiredToCall === 0 ? 0.15 : 0.3,
+    };
+    console.log(`${player} required to call: ${requiredToCall} thresholds: `, thresholds);
     let bettingBalance = balance - requiredToCall;
     if (bettingBalance > 200) bettingBalance = 200; // never more than 200
     const randInt = Math.random();
-    if (randInt < 0.1) decisionObj.decision = 'fold';
-    else if (canRaise && randInt < 0.2 && bettingBalance >= 10) {
+    if (randInt < thresholds.fold) decisionObj.decision = 'fold';
+    else if (canRaise && randInt < thresholds.raise && bettingBalance >= 10) {
       decisionObj.decision = 'raise';
       decisionObj.raiseAmt =
         Math.ceil(Math.random() * ((bettingBalance - requiredToCall) / 10)) * 10;

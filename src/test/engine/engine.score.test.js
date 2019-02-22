@@ -1,6 +1,6 @@
 import { Card, Deck } from '../../util/deck';
-import { getScore, getScoreObject, getWinner } from '../../util/engine';
 import { createHand } from '../../util/helpers';
+import { getScore, getScoreObject } from '../../util/engine/score';
 require('dotenv').config();
 
 const stressMultiplier = process.env.STRESS_TEST_MULTIPLIER; // determines loop size for stress tests
