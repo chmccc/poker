@@ -19,3 +19,14 @@ body {
   padding-top: 30px;
   margin: 0 auto !important;
 }
+
+::-webkit-scrollbar {
+  width: 5px;
+  background: inherit;
+}
+
+/* optional: show position indicator in red */
+::-webkit-scrollbar-thumb {
+  background: rgb(0, 61, 0);
+  border-radius: 5px;
+}

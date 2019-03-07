@@ -44,7 +44,7 @@ const StyledPoker = styled.div`
   display: grid;
   width: 920px;
   grid-template-columns: 190px 330px 180px 190px;
-  grid-template-rows: 70px 150px 130px 220px;
+  grid-template-rows: 80px 150px 130px 220px;
   grid-row-gap: 10px;
   grid-column-gap: 10px;
   grid-template-areas:

@@ -2,13 +2,13 @@ import React, { useRef, useEffect } from 'react';
 import styled from 'styled-components';
 
 const StyledInfoPanel = styled.div`
-  width: 100%;
+  width: 99%;
   height: 100%;
   grid-area: infopanel;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  overflow: scroll;
+  overflow-y: scroll;
   p {
     font-size: 12px;
     margin: 1px 20px;
