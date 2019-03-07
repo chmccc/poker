@@ -1,6 +1,6 @@
 # React Texas Holdem Poker
 
-This is a Poker game built in React mainly for me to experiment with game-related logic, AI, and WebSockets for multiplayer. It is an ongoing project and much remains to be done. You can view a recent (though likely not latest) version [here](http://ec2-52-53-214-71.us-west-1.compute.amazonaws.com).
+This is a Poker game built in React mainly for me to experiment with game-related logic, AI, and WebSockets for multiplayer. It is an ongoing project and much remains to be done. You can view a recent (though likely not latest) version <a href="http://ec2-52-53-214-71.us-west-1.compute.amazonaws.com" target="_blank">here</a>.
 
 ## Core Engine Functionality
 
