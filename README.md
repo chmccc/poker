@@ -1,8 +1,13 @@
-## Functionality
+# React Texas Holdem Poker
+
+This is a Poker game built in React mainly for me to experiment with game-related logic, AI, and WebSockets for multiplayer. It is an ongoing project and much remains to be done. You can view a recent (though likely not latest) version [here](ec2-52-53-214-71.us-west-1.compute.amazonaws.com).
+
+## Core Engine Functionality
 
 ### Dealing
 
 - set proper card distribution at each game stage ✔️
+- rotating dealer & blinds
 
 ### Score checking
 
@@ -11,20 +16,39 @@
 - determine winners between hands ✔️
 - determine winners based on kicker cards ✔️
 
-### Ability to fold
+### Player actions/betting
 
-- not scoring a folded player ✔️
+- able to fold ✔️
+- skipping & not scoring a folded player ✔️
+- able to check & call ✔️
+- able to raise
+- distribution of pot to winner(s) ✔️
 
-#### Ability to bet
+## AI
 
-#### Ability to raise
+### v0.1:
 
-### AI strategy
+- raises, folds, and calls randomly, weighted toward calling ✔️
+- does not fold if checking is possible ✔️
 
-- when to fold
-- how much to bet/whether to call
-- when to call
-- when to raise
+### v0.2:
+
+- in 1st round only, makes calculated decision based on strength of hole cards
+
+### v1 (MVP before multiplayer can be introduced):
+
+- bets sensible amounts based solely on strength/potential of own cards
+
+### v1.1:
+
+- considers other players' cards
+
+### v2:
+
+- uses FSMs for varied play strategy
+  - based on position (blind, dealer, etc)
+  - based on performance (losing, winning, etc)
+  - based on gambits (bluffing)
 
 ## Display and messaging
 
@@ -46,4 +70,8 @@
 ### Message window
 
 - should report the winner of a hand ✔️
-- should report when a hand was won by a high card
+- should report when a hand was won by a high card ✔️
+
+## Multiplayer
+
+- TBD
