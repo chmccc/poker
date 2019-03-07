@@ -2,8 +2,12 @@
  * @module engine
  * @description Contains functions related to deck management
  */
-
 // TODO: add JSDoc annotations
+
+import env from '../../env';
+
+const debug = env.ENGINE_DEBUG_ON;
+console.log('engine debug? ', debug);
 
 // caches all hands passed in regardless of size -- should improve performance in any function that looks for a best score from given cards
 class ScoreCache {
@@ -432,7 +436,7 @@ const kickerFuncSwitch = (best, curr, tableCards) => {
       // the same high card
       return kickerHighCard(best, curr, tableCards);
     default:
-      console.log('error object: ', best, 'vs', curr);
+      if (debug) console.log('error object: ', best, 'vs', curr);
       throw new Error('kickerFuncSwitch: No valid score prop on given score object.');
   }
 };
@@ -600,13 +604,17 @@ const getWinner = (playerData, tableCards) => {
         output.winners.push(best);
       }
     } catch (e) {
-      console.log('error caught: hand type: ', best.type);
-      console.log('error info: ', e.message);
-      console.log('playerData: ', playerData.player.hand.map(card => [card.value, card.suit]));
-      console.log('ai1 Data: ', playerData.ai1.hand.map(card => [card.value, card.suit]));
-      console.log('ai2 Data: ', playerData.ai2.hand.map(card => [card.value, card.suit]));
-      console.log('ai3 Data: ', playerData.ai3.hand.map(card => [card.value, card.suit]));
-      console.log('tableCards: ', tableCards.map(card => [card.value, card.suit]));
+      if (debug) console.log('error caught: hand type: ', best.type);
+      if (debug) console.log('error info: ', e.message);
+      if (debug)
+        console.log('playerData: ', playerData.player.hand.map(card => [card.value, card.suit]));
+      if (debug)
+        console.log('ai1 Data: ', playerData.ai1.hand.map(card => [card.value, card.suit]));
+      if (debug)
+        console.log('ai2 Data: ', playerData.ai2.hand.map(card => [card.value, card.suit]));
+      if (debug)
+        console.log('ai3 Data: ', playerData.ai3.hand.map(card => [card.value, card.suit]));
+      if (debug) console.log('tableCards: ', tableCards.map(card => [card.value, card.suit]));
       output.notify = 'Error caught in hand type ' + best.type;
       output.error = true;
     }
@@ -618,7 +626,7 @@ const getWinner = (playerData, tableCards) => {
         : ''
     }.`;
   }
-
+  if (debug) console.log('score cache hits so far: ', cache.hits);
   return output;
 };
 

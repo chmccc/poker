@@ -7,7 +7,11 @@
  * Fully featured: considers other players' cards, has bluff logic, uses FSM for varied play strategy (big blind, dealer, SB, losing, winning, etc)
  */
 
-const getDecision = (playerData, player, canRaise = true, thresholds) => {
+import env from '../../env';
+const debug = env.AI_DEBUG_ON;
+console.log('ai debug? ', debug);
+
+const getDecision = (playerData, player, canRaise = true) => {
   const decisionObj = { decision: '', raiseAmt: 0, totalAmt: 0 };
   const { currentBet } = playerData[player];
   let { balance } = playerData[player];
@@ -20,14 +24,23 @@ const getDecision = (playerData, player, canRaise = true, thresholds) => {
     ) - currentBet;
   if (balance < requiredToCall) decisionObj.decision = 'fold';
   else {
-    thresholds = {
+    const thresholds = {
       fold: requiredToCall === 0 ? 0 : 0.15,
       raise: requiredToCall === 0 ? 0.15 : 0.3,
     };
-    console.log(`${player} required to call: ${requiredToCall} thresholds: `, thresholds);
+
+    if (debug) {
+      console.log(
+        `${player} required to call: ${requiredToCall} thresholds:
+      raise: ${thresholds.raise}, fold: ${thresholds.fold}`
+      );
+      console.log(thresholds.raise, thresholds.fold);
+    }
+
     let bettingBalance = balance - requiredToCall;
     if (bettingBalance > 200) bettingBalance = 200; // never more than 200
     const randInt = Math.random();
+    if (debug) console.log('randint: ', randInt);
     if (randInt < thresholds.fold) decisionObj.decision = 'fold';
     else if (canRaise && randInt < thresholds.raise && bettingBalance >= 10) {
       decisionObj.decision = 'raise';
@@ -94,7 +107,7 @@ dummyPlayerData.ai1.balance = 100;
 dummyPlayerData.ai2.currentBet = 10;
 dummyPlayerData.ai3.currentBet = 30;
 
-console.log(getNextMove(dummyPlayerData, 'ai1'));
+if (debug) console.log(getNextMove(dummyPlayerData, 'ai1'));
 
 /* --- DEBUG */
 
