@@ -72,7 +72,6 @@ const createBasePlayerData = () => {
       balance: 1000,
       currentBet: 0,
       hasPlayedThisRound: false,
-      options: { Fold: false, Call: false, Raise: false },
     },
     ai2: {
       id: 'ai2',
@@ -82,7 +81,6 @@ const createBasePlayerData = () => {
       balance: 1000,
       currentBet: 0,
       hasPlayedThisRound: false,
-      options: { Fold: false, Call: false, Raise: false },
     },
     ai3: {
       id: 'ai3',
@@ -92,7 +90,6 @@ const createBasePlayerData = () => {
       balance: 1000,
       currentBet: 0,
       hasPlayedThisRound: false,
-      options: { Fold: false, Call: false, Raise: false },
     },
   };
 };
