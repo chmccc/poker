@@ -39,7 +39,10 @@ const InfoPanel = ({ messages }) => {
         div = el;
       }}>
       {messages.toArray().map((str, i, arr) => (
-        <p key={`${str.slice(0, 20)}_${i}`} className={`${i === arr.length - 1 ? 'blink' : ''}`}>
+        <p
+          key={`${str.slice(0, 20)}_${i}`}
+          // className={`${i === arr.length - 1 ? 'blink' : ''}`}
+        >
           {str}
         </p>
       ))}
