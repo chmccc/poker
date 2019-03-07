@@ -1,6 +1,7 @@
 import React, { Component, Fragment } from 'react';
 import styled from 'styled-components';
 
+import env from './env';
 import { InfoMessagesQueue } from './util/infoMessagesQueue';
 import engine from './util/engine/';
 import {
@@ -20,9 +21,11 @@ import InfoPanel from './components/InfoPanel';
 import Balance from './components/Balance';
 import PlayerHand from './components/PlayerHand';
 import OptionsPanel from './components/OptionsPanel';
-import { getDecision } from './util/engine/ai';
 
 /* DEBUG STUFF */
+
+const debug = env.FRONTEND_DEBUG_ON;
+console.log('frontend debug? ', debug);
 
 // used to override hole cards
 const debugHolePlayerData = newPlayerData => {
@@ -34,6 +37,40 @@ const debugHolePlayerData = newPlayerData => {
 
 // used to override table cards (pre-scoring)
 const debugTableCards = () => createHand([10, 9, 10, 4, 11], ['d', 'c', 'c', 'd', 's']);
+
+/* HELPERS */
+
+const getHighlightedWinningCards = (gameResult, tableCards, playerData) => {
+  // create helper objects of cards used to pass to highlightSelectCards
+  const usedCards = new Set();
+  const usedKickers = new Set();
+  gameResult.winners.forEach(scoreObj => {
+    scoreObj.cardsUsed.forEach(card => {
+      usedCards.add(card.displayName);
+    });
+    if (scoreObj.validKickers && scoreObj.validKickers.length) {
+      scoreObj.validKickers.forEach(card => {
+        usedKickers.add(card.displayName);
+      });
+    }
+  });
+
+  // run through each winner's hand and table cards and highlight cards used
+  tableCards = tableCards.map(card => highlightSelectCards(card, usedCards, 'skyblue'));
+
+  gameResult.winners.forEach(scoreObj => {
+    // one loop for hand cards
+    playerData[scoreObj.owner].hand = playerData[scoreObj.owner].hand.map(card =>
+      highlightSelectCards(card, usedCards, 'skyblue')
+    );
+    // and one for kickers
+    if (scoreObj.validKickers && scoreObj.validKickers.length)
+      playerData[scoreObj.owner].hand = playerData[scoreObj.owner].hand.map(card =>
+        highlightSelectCards(card, usedKickers, 'khaki')
+      );
+  });
+  return { tableCards, playerData };
+};
 
 /* STYLED COMPONENTS */
 
@@ -71,7 +108,7 @@ class Poker extends Component {
       currentPlayerID: 'player',
       highBet: 0,
       sleepTime: 500,
-      thresholds: { fold: 0.15, raise: 0.3 },
+      thresholds: { fold: 0.5, raise: 0.6 },
     };
     this.forceAI1 = React.createRef();
     this.forceAI2 = React.createRef();
@@ -91,8 +128,9 @@ class Poker extends Component {
 
   newGame = () => {
     deck.reset();
-    console.clear();
+    if (debug) console.clear();
     const playerData = createBasePlayerData();
+    // persist balances
     playerData.player.balance = this.state.playerData.player.balance;
     playerData.ai1.balance = this.state.playerData.ai1.balance;
     playerData.ai2.balance = this.state.playerData.ai2.balance;
@@ -115,7 +153,7 @@ class Poker extends Component {
     let infoMessages = this.state.infoMessages.copy();
     let tableCards = this.state.tableCards;
     let { displayAICards, gameStage } = this.state;
-    console.log('dealing, gamestage: ', gameStage);
+    if (debug) console.log('dealing, gamestage: ', gameStage);
 
     // reset players turns taken back to false
     Object.values(playerData).forEach(player => {
@@ -124,38 +162,41 @@ class Poker extends Component {
 
     if (gameStage === 0) {
       // deal players cards
-      infoMessages.add('Hole cards dealt.');
-
       Object.values(playerData).forEach(playerObj => {
         playerObj.hand = [deck.dealCard(), deck.dealCard()];
       });
+      infoMessages.add('Hole cards dealt.');
     } else if (gameStage === 1) {
       // deal the flop
-      infoMessages.add('Flop dealt.');
       tableCards = addToTableCards(tableCards, 3);
+      infoMessages.add('Flop dealt.');
     } else if (gameStage === 2 || gameStage === 3) {
       // deal the turn/river
+      tableCards = addToTableCards(tableCards, 1);
       infoMessages.add(gameStage === 2 ? 'Turn dealt.' : 'River dealt.');
-      tableCards = addToTableCards(this.state.tableCards, 1);
     } else if (gameStage === 4) {
       displayAICards = true;
-      const gameResult = engine.score.getWinner(this.state.playerData, this.state.tableCards);
-      infoMessages.add(gameResult.notify);
+      const gameResult = engine.score.getWinner(playerData, tableCards);
 
       // watch for that pesky error
-      if (!gameResult.error) {
-        console.log('gameResult: ', gameResult);
-        if (gameResult.winners.length < 1) throw new Error('No winners in gameResult!');
+      if (gameResult.error) infoMessages.add('Got that pesky error.');
+      else {
+        if (debug) console.log('deal: gameResult: ', gameResult);
+        const winnerIds = gameResult.winners.map(score => score.owner);
+        playerData = this.handleWinners(playerData, winnerIds);
+        infoMessages.add(gameResult.notify);
         // highlight winning cards
-        const highlights = this.getHighlightedWinningCards(gameResult);
+        const highlights = getHighlightedWinningCards(gameResult, tableCards, playerData);
         playerData = highlights.playerData;
         tableCards = highlights.tableCards;
-        // todo: pot splitting and such
-      } else infoMessages.add('Got that shitty error.');
+      }
     }
 
     // enable player options as currently the player begins each round
-    if (playerData.player.active) playerData = this.enablePlayerOptions(playerData);
+    if (playerData.player.active) {
+      if (gameStage === 4) playerData = this.enablePlayerOptions(playerData, { 'New Game': true });
+      else playerData = this.enablePlayerOptions(playerData);
+    }
 
     await this.setStatePromise({
       playerData,
@@ -170,42 +211,6 @@ class Poker extends Component {
     if (!playerData.player.active) this.tick();
   };
 
-  // todo: this probably belongs in helpers
-  getHighlightedWinningCards = gameResult => {
-    // create helper objects of cards used to pass to highlightSelectCards
-    const usedCards = new Set();
-    const usedKickers = new Set();
-    gameResult.winners.forEach(scoreObj => {
-      scoreObj.cardsUsed.forEach(card => {
-        usedCards.add(card.displayName);
-      });
-      if (scoreObj.validKickers && scoreObj.validKickers.length) {
-        scoreObj.validKickers.forEach(card => {
-          usedKickers.add(card.displayName);
-        });
-      }
-    });
-
-    const tableCards = this.state.tableCards.map(card =>
-      highlightSelectCards(card, usedCards, 'skyblue')
-    );
-
-    // clone all player data, then run through each winner's hand and highlight cards used
-    const playerData = clonePlayerData(this.state.playerData);
-    gameResult.winners.forEach(scoreObj => {
-      // one loop for hand cards
-      playerData[scoreObj.owner].hand = playerData[scoreObj.owner].hand.map(card =>
-        highlightSelectCards(card, usedCards, 'skyblue')
-      );
-      // and one for kickers
-      if (scoreObj.validKickers && scoreObj.validKickers.length)
-        playerData[scoreObj.owner].hand = playerData[scoreObj.owner].hand.map(card =>
-          highlightSelectCards(card, usedKickers, 'khaki')
-        );
-    });
-    return { tableCards, playerData };
-  };
-
   // returns a modified playerData object with appropriate options enabled
   enablePlayerOptions = (playerData = clonePlayerData(this.state.playerData), force) => {
     playerData.player.options = {
@@ -217,7 +222,7 @@ class Poker extends Component {
     };
     // allow options to be forced for edge cases like last man standing
     if (force) {
-      Object.keys(force).forEach(key => (playerData[key] = force[key]));
+      Object.keys(force).forEach(key => (playerData.player.options[key] = force[key]));
       return playerData;
     }
     const { options } = playerData.player;
@@ -253,68 +258,81 @@ class Poker extends Component {
     return playerData;
   };
 
+  /**
+   * Method which distributes pot to winner(s) and returns updated playerData
+   * @param {Object} playerData A cloned, writable playerData object
+   * @param {Array} winnerIds An array of all ids of winning players
+   * @returns {Object} A mutated playerData object with updated balances
+   */
+  handleWinners = (playerData, winnerIds) => {
+    if (debug) console.log('handleWinners: winnerIds: ', winnerIds);
+    if (winnerIds.length === 0) {
+      throw new Error('handleWinners error: No winners in winningPlayersData array.');
+    } else {
+      const winAmt = Math.floor(this.state.potAmt / winnerIds.length);
+      winnerIds.forEach(id => {
+        playerData[id].balance += winAmt;
+      });
+    }
+    return playerData;
+  };
+
   tick = async () => {
     await sleep(this.state.sleepTime);
 
     let playerData = clonePlayerData(this.state.playerData);
+    const currentPlayerID = this.getNextPlayer(this.state.currentPlayerID);
+    const activePlayerIds = Object.values(playerData)
+      .filter(player => player.active)
+      .map(player => player.id);
 
-    // at gamestage 5 we must allow the player to start a new game
     if (this.state.gameStage >= 5) {
+      // at gamestage 5 we must allow the player to start a new game
       playerData = this.enablePlayerOptions(playerData);
       return this.setState({ playerData });
-    }
-
-    // move to next player
-    const currentPlayerID = this.getNextPlayer(this.state.currentPlayerID);
-
-    // start new game and break ticking if all players but one have folded
-    if (Object.values(playerData).filter(player => player.active).length < 2) {
+    } else if (activePlayerIds.length < 2) {
+      // handle winner and allow new game if all players but one have folded
+      playerData = await this.handleWinners(playerData, activePlayerIds);
+      playerData = this.enablePlayerOptions(playerData, { 'New Game': true });
       const infoMessages = this.state.infoMessages
         .copy()
-        .add(`${playerData[currentPlayerID].fullName} wins since all other players folded.`);
-      // todo: handle win
-      playerData = this.enablePlayerOptions(playerData, { 'New Game': true });
-      return this.setState({ infoMessages });
+        .add(`${playerData[activePlayerIds[0]].fullName} wins since all other players folded.`);
+      return this.setState({ playerData, infoMessages });
+    } else {
+      // check whether the round is over
+      // i.e., this player has played a turn and there's no bet to them
+      const { currentBet, hasPlayedThisRound } = playerData[currentPlayerID];
+      const { highBet } = this.state;
+
+      if (currentBet === highBet && hasPlayedThisRound) return this.deal();
+
+      // enable player options and break ticking if it's the player's turn
+      if (currentPlayerID === 'player') {
+        playerData = this.enablePlayerOptions(playerData);
+        return this.setState({ currentPlayerID, playerData });
+      }
+
+      // --- begin ai routine ---
+
+      // is this ai allowed to raise?
+      let canRaise = !(hasPlayedThisRound && highBet === currentBet);
+      if (debug)
+        console.log(
+          `${currentPlayerID} deciding... ${
+            canRaise ? 'could raise' : 'could not raise'
+          } if they wanted.`
+        );
+
+      // make their move (call, raise, fold)
+      const { decision, totalAmt } = engine.ai.getDecision(playerData, currentPlayerID, canRaise);
+
+      // totalAmt only used in raise/call
+      await this[decision](currentPlayerID)(totalAmt);
+
+      // disable player options
+      // *important* this will grab new state as changed by above decision function
+      playerData = this.disablePlayerOptions();
     }
-
-    // check whether the round is over
-    // i.e., this player has played a turn and there's no bet to them
-    const { currentBet, hasPlayedThisRound } = playerData[currentPlayerID];
-    const { highBet } = this.state;
-    // console.log(
-    //   `checking if round is over. player: ${currentPlayerID} currentBet: ${currentBet} highBet: ${highBet}, hasPlayedThisRound: ${hasPlayedThisRound}`
-    // );
-    if (currentBet === highBet && hasPlayedThisRound && currentPlayerID !== 'player')
-      return this.deal();
-
-    // enable player options and break ticking if it's the player's turn
-    if (currentPlayerID === 'player') {
-      playerData = this.enablePlayerOptions(playerData);
-      return this.setState({ currentPlayerID, playerData });
-    }
-
-    // --- begin ai routine ---
-
-    // is this ai allowed to raise?
-    let canRaise = !(hasPlayedThisRound && highBet === currentBet);
-    console.log(
-      `${currentPlayerID} ${canRaise ? 'could raise' : 'could not raise'} if they wanted.`
-    );
-
-    // make their move (call, raise, fold)
-    const { decision, totalAmt } = engine.ai.getDecision(
-      playerData,
-      currentPlayerID,
-      canRaise,
-      this.state.thresholds
-    );
-
-    // totalAmt only used in raise/call
-    await this[decision](currentPlayerID)(totalAmt);
-
-    // disable player options
-    // *important* this will grab new state as changed by above decision function
-    playerData = this.disablePlayerOptions();
 
     // the sleep should handle any setState lag
     this.setState({ currentPlayerID, playerData });
@@ -378,7 +396,7 @@ class Poker extends Component {
   };
 
   raise = playerID => async amount => {
-    console.log('raise! by ', playerID, amount);
+    if (debug) console.log('raise! by ', playerID, amount);
     return this.makeBet(playerID, 'raise', amount);
   };
 
@@ -397,7 +415,7 @@ class Poker extends Component {
           {Object.values(this.state.playerData)
             .filter(data => data.id !== 'player')
             .sort((data1, data2) => data1.id - data2.id)
-            .map((data, i) => (
+            .map(data => (
               <AI key={data.id} data={data} tableCards={tableCards} showCards={displayAICards} />
             ))}
           <Balance area="pot" amount={this.state.potAmt} />
@@ -424,9 +442,11 @@ class Poker extends Component {
         </StyledPoker>
         <button
           onClick={() => {
-            let { debug } = this.state;
+            let { debug, sleepTime } = this.state;
+            // note this is different from the global "env" debug variable
             debug = !debug;
-            this.setState({ debug });
+            sleepTime = sleepTime === 50 ? 500 : 50;
+            this.setState({ debug, sleepTime });
           }}>{`Debug Mode (${this.state.debug ? 'ON' : 'OFF'})`}</button>
       </Fragment>
     );
