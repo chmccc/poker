@@ -35,17 +35,18 @@ class ScoreCache {
 let cache = new ScoreCache();
 
 // primary function to build a score object from a hand
-const getScoreObject = hand => {
+const getScoreObject = (hand) => {
   const [cached, cacheString] = cache.checkCache(hand);
   if (cached) return cached;
   hand = hand.sort((a, b) => a.value - b.value);
-  if (hand.length !== 5) throw new Error('getScoreObject: hand size must be 5!');
+  if (hand.length !== 5)
+    throw new Error("getScoreObject: hand size must be 5!");
 
   // we'll detect straight and flush during loop
   let hasStraight = true;
   let hasFlush = true;
   let aceLowStraight = false;
-  let scoreObject = { score: 0, type: 'a high card' }; // base score object
+  let scoreObject = { score: 0, type: "a high card" }; // base score object
   const cardsByValue = {};
 
   // build an object to store how many of each card the hand has, and update hasStraight/hasFlush
@@ -69,13 +70,23 @@ const getScoreObject = hand => {
   }
 
   if (hasStraight && hasFlush)
-    scoreObject = { score: 8, type: 'a straight flush', cardsUsed: hand, highHandCards: [hand[4]] };
+    scoreObject = {
+      score: 8,
+      type: "a straight flush",
+      cardsUsed: hand,
+      highHandCards: [hand[4]],
+    };
   else if (hasStraight)
-    scoreObject = { score: 5, type: 'a straight', cardsUsed: hand, highHandCards: [hand[4]] };
+    scoreObject = {
+      score: 5,
+      type: "a straight",
+      cardsUsed: hand,
+      highHandCards: [hand[4]],
+    };
   else if (hasFlush)
     scoreObject = {
       score: 4,
-      type: 'a flush',
+      type: "a flush",
       cardsUsed: hand,
       highHandCards: hand.sort((a, b) => b.value - a.value),
     };
@@ -88,7 +99,7 @@ const getScoreObject = hand => {
       if (cardSet.length === 4) {
         scoreObject = {
           score: 7,
-          type: 'four of a kind',
+          type: "four of a kind",
           cardsUsed: cardSet,
           highHandCards: [cardSet[0]],
         };
@@ -99,7 +110,7 @@ const getScoreObject = hand => {
         if (firstPair) {
           scoreObject = {
             score: 6,
-            type: 'a full house',
+            type: "a full house",
             cardsUsed: hand,
             highHandCards: [cardSet[0], firstPair[0]],
           };
@@ -108,7 +119,7 @@ const getScoreObject = hand => {
           threeOfAKind = cardSet;
           scoreObject = {
             score: 3,
-            type: 'three of a kind',
+            type: "three of a kind",
             cardsUsed: cardSet,
             highHandCards: [cardSet[0]],
           };
@@ -119,16 +130,18 @@ const getScoreObject = hand => {
         if (threeOfAKind) {
           scoreObject = {
             score: 6,
-            type: 'a full house',
+            type: "a full house",
             cardsUsed: hand,
             highHandCards: [threeOfAKind[0], cardSet[0]],
           };
           break;
         } else if (firstPair) {
-          const sorted = [...firstPair, ...cardSet].sort((a, b) => b.value - a.value); // will also serve as cardsUsed
+          const sorted = [...firstPair, ...cardSet].sort(
+            (a, b) => b.value - a.value
+          ); // will also serve as cardsUsed
           scoreObject = {
             score: 2,
-            type: 'two pair',
+            type: "two pair",
             cardsUsed: sorted,
             highHandCards: [sorted[0], sorted[2]],
           };
@@ -137,7 +150,7 @@ const getScoreObject = hand => {
           firstPair = cardSet;
           scoreObject = {
             score: 1,
-            type: 'a pair',
+            type: "a pair",
             cardsUsed: cardSet,
             highHandCards: [cardSet[0]],
           };
@@ -157,10 +170,16 @@ const getScoreObject = hand => {
 const compareByHighHandCards = (firstScoreObject, secondScoreObject) => {
   const output = { draw: false, bestScoreObject: null };
   for (let i = 0; i < secondScoreObject.highHandCards.length; i++) {
-    if (secondScoreObject.highHandCards[i].value > firstScoreObject.highHandCards[i].value) {
+    if (
+      secondScoreObject.highHandCards[i].value >
+      firstScoreObject.highHandCards[i].value
+    ) {
       output.bestScoreObject = secondScoreObject;
       break;
-    } else if (secondScoreObject.highHandCards[i].value < firstScoreObject.highHandCards[i].value) {
+    } else if (
+      secondScoreObject.highHandCards[i].value <
+      firstScoreObject.highHandCards[i].value
+    ) {
       output.bestScoreObject = firstScoreObject;
       break;
     }
@@ -170,7 +189,7 @@ const compareByHighHandCards = (firstScoreObject, secondScoreObject) => {
   return output;
 };
 
-const getScoreRecursively = hand => {
+const getScoreRecursively = (hand) => {
   const [cached, cacheString] = cache.checkCache(hand);
   if (cached) return cached;
   if (hand.length === 5) return getScoreObject(hand);
@@ -179,15 +198,22 @@ const getScoreRecursively = hand => {
     for (let i = 0; i < hand.length; i++) {
       let newScoreObject;
       if (hand.length === 7) {
-        newScoreObject = getScoreRecursively([...hand.slice(0, i), ...hand.slice(i + 1)]);
-      } else newScoreObject = getScoreObject([...hand.slice(0, i), ...hand.slice(i + 1)]);
+        newScoreObject = getScoreRecursively([
+          ...hand.slice(0, i),
+          ...hand.slice(i + 1),
+        ]);
+      } else
+        newScoreObject = getScoreObject([
+          ...hand.slice(0, i),
+          ...hand.slice(i + 1),
+        ]);
       if (!bestScoreObject) bestScoreObject = newScoreObject;
-      else if (newScoreObject.score > bestScoreObject.score) bestScoreObject = newScoreObject;
+      else if (newScoreObject.score > bestScoreObject.score)
+        bestScoreObject = newScoreObject;
       else if (newScoreObject.score === bestScoreObject.score) {
-        const { bestScoreObject: bestScoreObjectByHighHandCards } = compareByHighHandCards(
-          bestScoreObject,
-          newScoreObject
-        );
+        const {
+          bestScoreObject: bestScoreObjectByHighHandCards,
+        } = compareByHighHandCards(bestScoreObject, newScoreObject);
         bestScoreObject = bestScoreObjectByHighHandCards || newScoreObject;
       }
     }
@@ -197,7 +223,9 @@ const getScoreRecursively = hand => {
 };
 
 const getScore = (holeCards, tableCards, owner) => {
-  const fullHand = [...holeCards, ...tableCards].sort((a, b) => a.value - b.value);
+  const fullHand = [...holeCards, ...tableCards].sort(
+    (a, b) => a.value - b.value
+  );
   const bestScoreObject = getScoreRecursively(fullHand);
   bestScoreObject.owner = owner;
   // sort and store the hole cards separately on the score object
@@ -205,7 +233,12 @@ const getScore = (holeCards, tableCards, owner) => {
   return bestScoreObject;
 };
 
-const compareByRemainingCards = (firstScoreObject, secondScoreObject, firstArray, secondArray) => {
+const compareByRemainingCards = (
+  firstScoreObject,
+  secondScoreObject,
+  firstArray,
+  secondArray
+) => {
   const output = { draw: false };
 
   const limit = Math.max(firstArray.length, secondArray.length);
@@ -247,7 +280,7 @@ const kickerTable4 = (firstScoreObject, secondScoreObject, tableCards) => {
 
   // get value of the only non-4OAK card on the table
   const tableKickers = tableCards.filter(
-    card => card.value !== firstScoreObject.highHandCards[0].value
+    (card) => card.value !== firstScoreObject.highHandCards[0].value
   );
   const tableKickerVal = tableKickers[0].value;
 
@@ -272,17 +305,17 @@ const kicker3OAK = (firstScoreObject, secondScoreObject, tableCards) => {
   // get 2 highest cards on table that are not part of the trip
   const tripVal = firstScoreObject.highHandCards[0].value;
   const tableKickers = tableCards
-    .filter(card => card.value !== tripVal) // no trip cards
+    .filter((card) => card.value !== tripVal) // no trip cards
     .sort((a, b) => b.value - a.value)
     .slice(0, 2) // only the highest 2 kickers
     .sort((a, b) => a.value - b.value); // must be ascending for comparison
 
   // filter player kickers
-  const filterKickers = scoreObject => {
+  const filterKickers = (scoreObject) => {
     return (
       scoreObject.validKickers ||
       scoreObject.holeCards
-        .filter(card => card.value !== tripVal) // no trips
+        .filter((card) => card.value !== tripVal) // no trips
         // no cards beaten by any table kicker
         .filter((card, index) => !(tableKickers[index].value > card.value))
     );
@@ -291,7 +324,8 @@ const kicker3OAK = (firstScoreObject, secondScoreObject, tableCards) => {
   secondScoreObject.validKickers = filterKickers(secondScoreObject);
 
   const tableWins =
-    firstScoreObject.validKickers.length === 0 && secondScoreObject.validKickers.length === 0;
+    firstScoreObject.validKickers.length === 0 &&
+    secondScoreObject.validKickers.length === 0;
 
   const result = compareByRemainingCards(
     firstScoreObject,
@@ -306,20 +340,20 @@ const kicker3OAK = (firstScoreObject, secondScoreObject, tableCards) => {
 };
 
 const kicker2P = (firstScoreObject, secondScoreObject, tableCards) => {
-  const twinVals = firstScoreObject.highHandCards.map(e => e.value);
+  const twinVals = firstScoreObject.highHandCards.map((e) => e.value);
 
   // get value of best table kicker
   const tableKickerVal = tableCards
-    .filter(card => !twinVals.includes(card.value))
+    .filter((card) => !twinVals.includes(card.value))
     .sort((a, b) => b.value - a.value)[0].value;
 
   // filter player kickers
-  const filterKickers = scoreObject => {
+  const filterKickers = (scoreObject) => {
     return (
       scoreObject.validKickers ||
       scoreObject.holeCards
-        .filter(card => !twinVals.includes(card.value)) // no twins
-        .filter(card => !(tableKickerVal > card.value)) // no cards beaten by table kicker
+        .filter((card) => !twinVals.includes(card.value)) // no twins
+        .filter((card) => !(tableKickerVal > card.value)) // no cards beaten by table kicker
         .slice(0, 1)
     ); // max 1 kicker
   };
@@ -327,7 +361,8 @@ const kicker2P = (firstScoreObject, secondScoreObject, tableCards) => {
   secondScoreObject.validKickers = filterKickers(secondScoreObject);
 
   const tableWins =
-    firstScoreObject.validKickers.length === 0 && secondScoreObject.validKickers.length === 0;
+    firstScoreObject.validKickers.length === 0 &&
+    secondScoreObject.validKickers.length === 0;
 
   const result = compareByRemainingCards(
     firstScoreObject,
@@ -345,17 +380,17 @@ const kicker1P = (firstScoreObject, secondScoreObject, tableCards) => {
   // get 3 highest cards on table that are not part of the pair
   const twinVal = firstScoreObject.highHandCards[0].value;
   const tableKickers = tableCards
-    .filter(card => card.value !== twinVal) // no twins
+    .filter((card) => card.value !== twinVal) // no twins
     .sort((a, b) => b.value - a.value)
     .slice(0, 3) // only the highest 3 kickers
     .sort((a, b) => a.value - b.value); // must be ascending for comparison
 
   // filter player kickers
-  const filterKickers = scoreObject => {
+  const filterKickers = (scoreObject) => {
     return (
       scoreObject.validKickers ||
       scoreObject.holeCards
-        .filter(card => card.value !== twinVal) // no twins
+        .filter((card) => card.value !== twinVal) // no twins
         // no cards beaten by table kickers
         .filter((card, index) => !(tableKickers[index].value > card.value))
     );
@@ -364,7 +399,8 @@ const kicker1P = (firstScoreObject, secondScoreObject, tableCards) => {
   secondScoreObject.validKickers = filterKickers(secondScoreObject);
 
   const tableWins =
-    firstScoreObject.validKickers.length === 0 && secondScoreObject.validKickers.length === 0;
+    firstScoreObject.validKickers.length === 0 &&
+    secondScoreObject.validKickers.length === 0;
 
   const result = compareByRemainingCards(
     firstScoreObject,
@@ -386,7 +422,7 @@ const kickerHighCard = (firstScoreObject, secondScoreObject, tableCards) => {
     .sort((a, b) => b.value - a.value); // must be ascending for comparison
 
   // filter player kickers
-  const filterKickers = scoreObject => {
+  const filterKickers = (scoreObject) => {
     return (
       scoreObject.validKickers ||
       scoreObject.holeCards
@@ -398,7 +434,8 @@ const kickerHighCard = (firstScoreObject, secondScoreObject, tableCards) => {
   secondScoreObject.validKickers = filterKickers(secondScoreObject);
 
   const tableWins =
-    firstScoreObject.validKickers.length === 0 && secondScoreObject.validKickers.length === 0;
+    firstScoreObject.validKickers.length === 0 &&
+    secondScoreObject.validKickers.length === 0;
 
   const result = compareByRemainingCards(
     firstScoreObject,
@@ -432,8 +469,10 @@ const kickerFuncSwitch = (best, curr, tableCards) => {
       // the same high card
       return kickerHighCard(best, curr, tableCards);
     default:
-      console.log('error object: ', best, 'vs', curr);
-      throw new Error('kickerFuncSwitch: No valid score prop on given score object.');
+      console.log("error object: ", best, "vs", curr);
+      throw new Error(
+        "kickerFuncSwitch: No valid score prop on given score object."
+      );
   }
 };
 
@@ -456,7 +495,11 @@ const getWinner = (playerData, tableCards) => {
   let tiesByKicker = {};
 
   // for each active player, compare against the best score object so far in the array, updating as necessary
-  let best = getScore(playerHandsArray[0].hand, tableCards, playerHandsArray[0].id);
+  let best = getScore(
+    playerHandsArray[0].hand,
+    tableCards,
+    playerHandsArray[0].id
+  );
 
   if (playerHandsArray.length === 1) return best;
 
@@ -477,12 +520,16 @@ const getWinner = (playerData, tableCards) => {
           // in five card hands, no kicker is possible. however, these hands can still tie
           // TODO: separate this functionality into a helper function as it's repeated below
           let handKey = best.highHandCards.reduce(
-            (str, card, i) => (i === 0 ? card.value.toString() : str + `_${card.value.toString()}`),
-            ''
+            (str, card, i) =>
+              i === 0
+                ? card.value.toString()
+                : str + `_${card.value.toString()}`,
+            ""
           );
-          const kickerKey = 'none';
+          const kickerKey = "none";
           if (!tiesByKicker[best.score]) tiesByKicker[best.score] = {};
-          if (!tiesByKicker[best.score][handKey]) tiesByKicker[best.score][handKey] = {};
+          if (!tiesByKicker[best.score][handKey])
+            tiesByKicker[best.score][handKey] = {};
           if (!tiesByKicker[best.score][handKey][kickerKey])
             tiesByKicker[best.score][handKey][kickerKey] = {};
           tiesByKicker[best.score][handKey][kickerKey][curr.owner] = curr;
@@ -492,7 +539,11 @@ const getWinner = (playerData, tableCards) => {
         } else {
           // BEGIN KICKER LOGIC
 
-          let { draw, tableWins, bestScoreObject } = kickerFuncSwitch(best, curr, tableCards);
+          let { draw, tableWins, bestScoreObject } = kickerFuncSwitch(
+            best,
+            curr,
+            tableCards
+          );
           // handle kicker card draw
           if (draw) {
             // update outer (function-level) state
@@ -506,22 +557,27 @@ const getWinner = (playerData, tableCards) => {
             // generate a key string from hand cards
             let handKey = highHandCards.reduce(
               (str, card, i) =>
-                i === 0 ? card.value.toString() : str + `_${card.value.toString()}`,
-              ''
+                i === 0
+                  ? card.value.toString()
+                  : str + `_${card.value.toString()}`,
+              ""
             );
 
             // generate key string from kicker values (e.g. "5_3" or just "5" if table beat the 3), or 'table' if theyre all on the table
             let kickerKey = tableWins
-              ? 'table'
+              ? "table"
               : validKickers.reduce(
                   (str, card, i) =>
-                    i === 0 ? card.value.toString() : str + `_${card.value.toString()}`,
-                  ''
+                    i === 0
+                      ? card.value.toString()
+                      : str + `_${card.value.toString()}`,
+                  ""
                 );
 
             // update the tie tracker object
             if (!tiesByKicker[best.score]) tiesByKicker[best.score] = {};
-            if (!tiesByKicker[best.score][handKey]) tiesByKicker[best.score][handKey] = {};
+            if (!tiesByKicker[best.score][handKey])
+              tiesByKicker[best.score][handKey] = {};
             if (!tiesByKicker[best.score][handKey][kickerKey])
               tiesByKicker[best.score][handKey][kickerKey] = {};
             tiesByKicker[best.score][handKey][kickerKey][curr.owner] = curr;
@@ -556,19 +612,22 @@ const getWinner = (playerData, tableCards) => {
     try {
       // generate a key string from hand cards
       handKey = best.highHandCards.reduce(
-        (str, card, i) => (i === 0 ? card.value.toString() : str + `_${card.value.toString()}`),
-        ''
+        (str, card, i) =>
+          i === 0 ? card.value.toString() : str + `_${card.value.toString()}`,
+        ""
       );
 
       // generate key string from kicker values (e.g. "5_3" or just "5" if table beat the 3), or 'table' if theyre all on the table
-      if (fiveCardHands.has(best.score)) kickerKey = 'none';
+      if (fiveCardHands.has(best.score)) kickerKey = "none";
       else
         kickerKey = tableWinning
-          ? 'table'
+          ? "table"
           : best.validKickers.reduce(
               (str, card, i) =>
-                i === 0 ? card.value.toString() : str + `_${card.value.toString()}`,
-              ''
+                i === 0
+                  ? card.value.toString()
+                  : str + `_${card.value.toString()}`,
+              ""
             );
 
       if (
@@ -576,24 +635,46 @@ const getWinner = (playerData, tableCards) => {
         tiesByKicker[best.score][handKey] &&
         tiesByKicker[best.score][handKey][kickerKey]
       ) {
-        output.winners = Object.values(tiesByKicker[best.score][handKey][kickerKey]);
-        const ownerNamesArray = output.winners.map(scoreObj => scoreObj.owner);
-        output.notify = `Draw! Pot is split between ${ownerNamesArray.join(' and ')},
-          ${ownerNamesArray.length > 2 ? 'all' : 'both'} having ${best.type}.
+        output.winners = Object.values(
+          tiesByKicker[best.score][handKey][kickerKey]
+        );
+        const ownerNamesArray = output.winners.map(
+          (scoreObj) => scoreObj.owner
+        );
+        output.notify = `Draw! Pot is split between ${ownerNamesArray.join(
+          " and "
+        )},
+          ${ownerNamesArray.length > 2 ? "all" : "both"} having ${best.type}.
         `;
         output.potSplit = true;
       } else {
-        output.push(best);
+        output.winners.push(best);
+        output.notify = `Game over. ${best.owner} won with ${best.type}.`;
         output.potSplit = false;
       }
     } catch (e) {
-      console.log('error caught: hand type: ', best.type);
-      console.log('playerData: ', playerData.player.hand.map(card => [card.value, card.suit]));
-      console.log('ai1 Data: ', playerData.ai1.hand.map(card => [card.value, card.suit]));
-      console.log('ai2 Data: ', playerData.ai2.hand.map(card => [card.value, card.suit]));
-      console.log('ai3 Data: ', playerData.ai3.hand.map(card => [card.value, card.suit]));
-      console.log('tableCards: ', tableCards.map(card => [card.value, card.suit]));
-      output.notify = 'Error caught in hand type ' + best.type;
+      console.log("error caught: hand type: ", best.type);
+      console.log(
+        "playerData: ",
+        playerData.player.hand.map((card) => [card.value, card.suit])
+      );
+      console.log(
+        "ai1 Data: ",
+        playerData.ai1.hand.map((card) => [card.value, card.suit])
+      );
+      console.log(
+        "ai2 Data: ",
+        playerData.ai2.hand.map((card) => [card.value, card.suit])
+      );
+      console.log(
+        "ai3 Data: ",
+        playerData.ai3.hand.map((card) => [card.value, card.suit])
+      );
+      console.log(
+        "tableCards: ",
+        tableCards.map((card) => [card.value, card.suit])
+      );
+      output.notify = "Error caught in hand type " + best.type;
       output.error = true;
     }
   } else {
