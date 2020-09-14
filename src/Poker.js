@@ -1,15 +1,19 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
+import React, { Component } from "react";
+import styled from "styled-components";
 
-import { InfoMessagesQueue } from './util/infoMessagesQueue';
-import { getWinner, getScore } from './util/engine.js';
-import { clonePlayerData, shouldHighlight, addToTableCards } from './util/helpers';
-import { deck } from './util/deck.js'; // this is the initialized deck instance
+import { InfoMessagesQueue } from "./util/infoMessagesQueue";
+import { getWinner } from "./util/engine.js";
+import {
+  clonePlayerData,
+  shouldHighlight,
+  addToTableCards,
+} from "./util/helpers";
+import { deck } from "./util/deck.js"; // this is the initialized deck instance
 
-import PlayerDashboard from './components/PlayerDashboard';
-import Table from './components/Table.js';
-import AI from './components/AI';
-import InfoPanel from './components/InfoPanel';
+import PlayerDashboard from "./components/PlayerDashboard";
+import Table from "./components/Table.js";
+import AI from "./components/AI";
+import InfoPanel from "./components/InfoPanel";
 
 /* STYLED COMPONENTS */
 
@@ -34,10 +38,10 @@ const StyledPoker = styled.div`
 
 // todo: merge into playerData
 const fullNames = {
-  ai1: 'AI Opponent 1',
-  ai2: 'AI Opponent 2',
-  ai3: 'AI Opponent 3',
-  player: 'Player',
+  ai1: "AI Opponent 1",
+  ai2: "AI Opponent 2",
+  ai3: "AI Opponent 3",
+  player: "Player",
 };
 
 class Poker extends Component {
@@ -45,13 +49,18 @@ class Poker extends Component {
     super(props);
     this.state = {
       playerData: {
-        player: { id: 'player', active: true, hand: [] },
-        ai1: { id: 'ai1', active: true, hand: [] },
-        ai2: { id: 'ai2', active: true, hand: [] },
-        ai3: { id: 'ai3', active: true, hand: [] },
+        player: { id: "player", active: true, hand: [] },
+        ai1: { id: "ai1", active: true, hand: [] },
+        ai2: { id: "ai2", active: true, hand: [] },
+        ai3: { id: "ai3", active: true, hand: [] },
       },
       tableCards: [],
-      playerOptions: { Fold: false, Call: false, Deal: true, 'New Game': false },
+      playerOptions: {
+        Fold: false,
+        Call: false,
+        Deal: true,
+        "New Game": false,
+      },
       displayAICards: false,
       gameStage: 0,
       playerIsActive: true,
@@ -65,9 +74,9 @@ class Poker extends Component {
 
     if (gameStage === 0) {
       // deal players cards
-      infoMessages.add('Hole cards dealt.');
+      infoMessages.add("Hole cards dealt.");
       const newPlayerData = clonePlayerData(this.state.playerData);
-      Object.values(newPlayerData).forEach(playerObj => {
+      Object.values(newPlayerData).forEach((playerObj) => {
         playerObj.hand = [deck.dealCard(), deck.dealCard()];
       });
       this.setState({
@@ -76,7 +85,7 @@ class Poker extends Component {
           Deal: false,
           Fold: playerIsActive,
           Call: playerIsActive,
-          'New Game': false,
+          "New Game": false,
         },
         gameStage: gameStage + 1,
         infoMessages,
@@ -85,7 +94,7 @@ class Poker extends Component {
 
     if (gameStage === 1) {
       // deal the flop
-      infoMessages.add('Flop dealt.');
+      infoMessages.add("Flop dealt.");
       const newTableCards = addToTableCards(this.state.tableCards, 3);
       this.setState({
         tableCards: newTableCards,
@@ -93,7 +102,7 @@ class Poker extends Component {
           Deal: false,
           Fold: playerIsActive,
           Call: playerIsActive,
-          'New Game': false,
+          "New Game": false,
         },
         gameStage: gameStage + 1,
         infoMessages,
@@ -102,7 +111,7 @@ class Poker extends Component {
 
     if (gameStage === 2 || gameStage === 3) {
       // deal the turn/river
-      infoMessages.add(gameStage === 2 ? 'Turn dealt.' : 'River dealt.');
+      infoMessages.add(gameStage === 2 ? "Turn dealt." : "River dealt.");
       const newTableCards = addToTableCards(this.state.tableCards, 1);
       this.setState({
         tableCards: newTableCards,
@@ -110,7 +119,7 @@ class Poker extends Component {
           Deal: false,
           Fold: playerIsActive,
           Call: playerIsActive,
-          'New Game': false,
+          "New Game": false,
         },
         gameStage: gameStage + 1,
         infoMessages,
@@ -126,8 +135,9 @@ class Poker extends Component {
       infoMessages.add(gameResult.notify);
       // watch for error
       if (!gameResult.error) {
-        console.log('gameResult: ', gameResult);
-        if (gameResult.winners.length < 1) throw new Error('No winners in gameResult!');
+        console.log("gameResult: ", gameResult);
+        if (gameResult.winners.length < 1)
+          throw new Error("No winners in gameResult!");
         // highlight winning cards
         const highlights = this.getHighlightedWinningCards(gameResult);
         playerData = highlights.playerData;
@@ -139,29 +149,36 @@ class Poker extends Component {
         tableCards,
         displayAICards,
         gameStage: gameStage + 1,
-        playerOptions: { Fold: false, Call: false, Deal: false, 'New Game': true },
+        playerOptions: {
+          Fold: false,
+          Call: false,
+          Deal: false,
+          "New Game": true,
+        },
         infoMessages,
       });
     }
     if (!playerIsActive && gameStage < 4) setTimeout(this.deal, 1000);
   };
 
-  getHighlightedWinningCards = gameResult => {
+  getHighlightedWinningCards = (gameResult) => {
     // create helper object of cards used to pass to shouldHighlight
     const usedCards = new Set();
-    gameResult.winners.forEach(scoreObj => {
-      scoreObj.cardsUsed.forEach(card => {
+    gameResult.winners.forEach((scoreObj) => {
+      scoreObj.cardsUsed.forEach((card) => {
         usedCards.add(card.displayName);
       });
     });
 
-    const tableCards = this.state.tableCards.map(card => shouldHighlight(card, usedCards));
+    const tableCards = this.state.tableCards.map((card) =>
+      shouldHighlight(card, usedCards)
+    );
 
     // clone all player data, then run through each winner's hand and highlight cards used
     const playerData = clonePlayerData(this.state.playerData);
-    gameResult.winners.forEach(scoreObj => {
-      playerData[scoreObj.owner].hand = playerData[scoreObj.owner].hand.map(card =>
-        shouldHighlight(card, usedCards)
+    gameResult.winners.forEach((scoreObj) => {
+      playerData[scoreObj.owner].hand = playerData[scoreObj.owner].hand.map(
+        (card) => shouldHighlight(card, usedCards)
       );
     });
     return { tableCards, playerData };
@@ -172,13 +189,18 @@ class Poker extends Component {
     console.clear();
     this.setState({
       playerData: {
-        player: { id: 'player', active: true, hand: [] },
-        ai1: { id: 'ai1', active: true, hand: [] },
-        ai2: { id: 'ai2', active: true, hand: [] },
-        ai3: { id: 'ai3', active: true, hand: [] },
+        player: { id: "player", active: true, hand: [] },
+        ai1: { id: "ai1", active: true, hand: [] },
+        ai2: { id: "ai2", active: true, hand: [] },
+        ai3: { id: "ai3", active: true, hand: [] },
       },
       tableCards: [],
-      playerOptions: { Fold: false, Call: false, Deal: true, 'New Game': false },
+      playerOptions: {
+        Fold: false,
+        Call: false,
+        Deal: true,
+        "New Game": false,
+      },
       displayAICards: false,
       gameStage: 0,
       playerIsActive: true,
@@ -186,30 +208,43 @@ class Poker extends Component {
     });
   };
 
-  fold = playerID => {
+  fold = (playerID) => {
     const newPlayerData = clonePlayerData(this.state.playerData);
     newPlayerData[playerID].active = false;
-    const playerIsActive = playerID === 'player' ? false : this.state.playerIsActive;
-    const infoMessages = this.state.infoMessages.copy().add(`${fullNames[playerID]} folds.`);
+    const playerIsActive =
+      playerID === "player" ? false : this.state.playerIsActive;
+    const infoMessages = this.state.infoMessages
+      .copy()
+      .add(`${fullNames[playerID]} folds.`);
     this.setState(
       {
         playerData: newPlayerData,
         playerIsActive,
-        playerOptions: { Fold: false, Call: false, Deal: false, 'New Game': false },
+        playerOptions: {
+          Fold: false,
+          Call: false,
+          Deal: false,
+          "New Game": false,
+        },
         infoMessages,
       },
       this.deal
     );
   };
 
-  raise = playerID => {};
+  raise = (playerID) => {};
 
-  call = playerID => {
+  call = (playerID) => {
     this.deal();
   };
 
   render() {
-    const { playerData, tableCards, displayAICards, playerOptions } = this.state;
+    const {
+      playerData,
+      tableCards,
+      displayAICards,
+      playerOptions,
+    } = this.state;
     return (
       <StyledPoker>
         <InfoPanel messages={this.state.infoMessages} />
@@ -238,7 +273,7 @@ class Poker extends Component {
             Fold: this.fold,
             Call: this.call,
             Deal: this.deal,
-            'New Game': this.newGame,
+            "New Game": this.newGame,
           }}
           options={playerOptions}
         />
